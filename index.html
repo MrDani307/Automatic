@@ -3,19 +3,95 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mass Update</title>
+    <title>Smart Mass Editor</title>
     <style>
-        body { margin: 0; padding: 0; display: flex; justify-content: center; align-items: center; min-height: 100vh; background: #000428; background: linear-gradient(to right, #004e92, #000428); font-family: 'Segoe UI', sans-serif; }
-        .glass-card { background: rgba(255, 255, 255, 0.05); backdrop-filter: blur(15px); border-radius: 25px; border: 1px solid rgba(255, 255, 255, 0.1); padding: 25px; width: 90%; max-width: 350px; box-shadow: 0 20px 50px rgba(0,0,0,0.5); text-align: center; color: white; }
-        h2 { font-weight: 300; margin-bottom: 20px; color: #00d2ff; }
+        /* Дизайн в стиле матового стекла (Liquid Glass) */
+        body { 
+            margin: 0; 
+            padding: 0; 
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+            min-height: 100vh; 
+            background: linear-gradient(135deg, #0f0c29, #302b63, #24243e); 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+        }
+
+        .glass-card { 
+            background: rgba(255, 255, 255, 0.05); 
+            backdrop-filter: blur(20px); 
+            -webkit-backdrop-filter: blur(20px); 
+            border-radius: 30px; 
+            border: 1px solid rgba(255, 255, 255, 0.1); 
+            padding: 30px; 
+            width: 90%; 
+            max-width: 360px; 
+            box-shadow: 0 25px 50px rgba(0,0,0,0.5); 
+            text-align: center; 
+            color: white; 
+        }
+
+        h2 { font-weight: 300; margin-bottom: 25px; letter-spacing: 1px; color: #00d2ff; }
+
         .input-group { text-align: left; margin-bottom: 15px; }
-        label { font-size: 10px; text-transform: uppercase; opacity: 0.6; margin-left: 5px; }
-        input, textarea { width: 100%; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.2); border-radius: 10px; padding: 12px; color: white; font-size: 14px; box-sizing: border-box; outline: none; margin-top: 5px; font-family: inherit; }
-        textarea { height: 80px; resize: none; }
-        input:focus, textarea:focus { border-color: #00d2ff; }
-        button { width: 100%; padding: 16px; border-radius: 12px; border: none; background: #00d2ff; color: #fff; font-size: 15px; font-weight: bold; cursor: pointer; transition: 0.3s; margin-top: 10px; }
-        button:active { transform: scale(0.98); }
-        #status { margin-top: 15px; font-size: 12px; color: #00d2ff; }
+        
+        label { 
+            font-size: 10px; 
+            text-transform: uppercase; 
+            opacity: 0.6; 
+            margin-left: 8px; 
+            letter-spacing: 1px; 
+        }
+
+        input, textarea { 
+            width: 100%; 
+            background: rgba(255, 255, 255, 0.07); 
+            border: 1px solid rgba(255, 255, 255, 0.2); 
+            border-radius: 15px; 
+            padding: 15px; 
+            color: white; 
+            font-size: 16px; 
+            box-sizing: border-box; 
+            outline: none; 
+            margin-top: 5px; 
+            transition: 0.3s; 
+        }
+
+        textarea { height: 100px; resize: none; }
+
+        input:focus, textarea:focus { 
+            border-color: #00d2ff; 
+            background: rgba(255, 255, 255, 0.12); 
+            box-shadow: 0 0 15px rgba(0, 210, 255, 0.2);
+        }
+
+        button { 
+            width: 100%; 
+            padding: 18px; 
+            border-radius: 15px; 
+            border: none; 
+            background: linear-gradient(45deg, #00d2ff, #3a7bd5); 
+            color: white; 
+            font-size: 14px; 
+            font-weight: bold; 
+            cursor: pointer; 
+            transition: 0.3s; 
+            text-transform: uppercase; 
+            margin-top: 15px; 
+            box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+        }
+
+        button:active { transform: scale(0.96); opacity: 0.9; }
+        
+        button:disabled { background: #555; cursor: not-allowed; }
+
+        #status { 
+            margin-top: 20px; 
+            font-size: 13px; 
+            min-height: 1.5rem; 
+            opacity: 0.8; 
+            color: #00d2ff;
+        }
     </style>
 </head>
 <body>
@@ -24,25 +100,28 @@
     <h2>Mass Editor</h2>
     
     <div class="input-group">
-        <label>Список имен (через пробел, запятую и т.д.)</label>
-        <textarea id="searchNames" placeholder="Глеб, Иван 1.Саня Петр"></textarea>
+        <label>Кого ищем? (можно через пробел)</label>
+        <textarea id="searchNames" placeholder="Напр: Глеб Сергеевич Артем Максим"></textarea>
+    </div>
+
+    <div class="input-group" style="display: flex; gap: 10px;">
+        <div style="flex: 1;">
+            <label>Столбец (буква)</label>
+            <input type="text" id="colLetter" placeholder="B" maxlength="2" style="text-transform: uppercase;">
+        </div>
     </div>
 
     <div class="input-group">
-        <label>Буква столбца</label>
-        <input type="text" id="colLetter" placeholder="B" maxlength="2" style="text-transform: uppercase;">
+        <label>Что вписать?</label>
+        <input type="text" id="val" placeholder="Текст или статус">
     </div>
 
-    <div class="input-group">
-        <label>Что вписать всем?</label>
-        <input type="text" id="val" placeholder="Напр: Оплачено">
-    </div>
-
-    <button id="mainBtn" onclick="sendData()">ОБНОВИТЬ ВСЕХ</button>
-    <div id="status">Готов к массовой обработке</div>
+    <button id="mainBtn" onclick="sendData()">Обновить таблицу</button>
+    <div id="status">Готов к работе</div>
 </div>
 
 <script>
+    // Конвертер буквы в цифру (A -> 1, B -> 2)
     function letterToColumn(letter) {
         let column = 0, length = letter.length;
         for (let i = 0; i < length; i++) {
@@ -52,32 +131,42 @@
     }
 
     async function sendData() {
+        // ЗАМЕНИ НА СВОЮ ССЫЛКУ ПОСЛЕ РАЗВЕРТЫВАНИЯ (Deploy)
         const url = "https://script.google.com/macros/s/AKfycbyb2FrnNQl_HWKUAwFVt7-Yv_X7rERganxUHVC9JhAUHotdOKZuFEcQUymByraPyBe2mw/exec";
+        
         const btn = document.getElementById('mainBtn');
         const status = document.getElementById('status');
         
-        const names = document.getElementById('searchNames').value;
+        let rawInput = document.getElementById('searchNames').value;
         const letter = document.getElementById('colLetter').value.trim();
         const val = document.getElementById('val').value;
 
-        if(!names || !letter || !val) {
+        if(!rawInput || !letter || !val) {
             status.innerText = "⚠️ Заполни все поля!";
             return;
         }
 
+        // --- МАГИЯ: превращаем всё (пробелы, запятые, точки) в чистый список через запятую ---
+        let preparedNames = rawInput
+            .replace(/[\s,;\n]+/g, ',') // заменяем пробелы, переносы и запятые на одну запятую
+            .replace(/^,|,$/g, '');     // удаляем запятые в самом начале и в конце
+
         const colIndex = letterToColumn(letter);
         btn.disabled = true;
-        status.innerText = "⏳ Обработка списка...";
+        status.innerText = "⏳ Поиск и замена...";
 
         try {
-            const finalUrl = `${url}?col=${colIndex}&searchName=${encodeURIComponent(names)}&val=${encodeURIComponent(val)}`;
+            const finalUrl = `${url}?col=${colIndex}&searchName=${encodeURIComponent(preparedNames)}&val=${encodeURIComponent(val)}`;
             
-            await fetch(finalUrl, { method: 'POST', mode: 'no-cors' });
+            await fetch(finalUrl, { 
+                method: 'POST', 
+                mode: 'no-cors' 
+            });
 
-            status.innerText = "✅ Запрос отправлен! Синхронизация...";
+            status.innerText = "✅ Данные отправлены в таблицу!";
             document.getElementById('searchNames').value = "";
         } catch (e) {
-            status.innerText = "❌ Ошибка сети";
+            status.innerText = "❌ Ошибка сети или ссылки";
         } finally {
             btn.disabled = false;
         }
