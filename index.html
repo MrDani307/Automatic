@@ -3,44 +3,41 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Smart Sheets Editor</title>
+    <title>Search & Edit</title>
     <style>
-        body { margin: 0; padding: 0; display: flex; justify-content: center; align-items: center; min-height: 100vh; background: #121212; font-family: 'Segoe UI', sans-serif; }
-        .glass-card { background: rgba(255, 255, 255, 0.05); backdrop-filter: blur(15px); border-radius: 25px; border: 1px solid rgba(255, 255, 255, 0.1); padding: 25px; width: 85%; max-width: 320px; box-shadow: 0 15px 35px rgba(0,0,0,0.5); text-align: center; color: white; }
-        h2 { font-weight: 300; margin-bottom: 20px; color: #00d2ff; }
-        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 15px; }
-        .input-group { text-align: left; }
-        label { font-size: 10px; text-transform: uppercase; opacity: 0.6; margin-left: 5px; }
-        input { width: 100%; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.2); border-radius: 10px; padding: 12px; color: white; font-size: 16px; box-sizing: border-box; outline: none; margin-top: 5px; }
-        input:focus { border-color: #00d2ff; }
-        #val { margin-bottom: 15px; }
-        button { width: 100%; padding: 15px; border-radius: 10px; border: none; background: #00d2ff; color: #fff; font-size: 16px; font-weight: bold; cursor: pointer; transition: 0.3s; }
-        button:active { transform: scale(0.95); opacity: 0.8; }
-        #status { margin-top: 15px; font-size: 12px; height: 1.2rem; }
+        body { margin: 0; padding: 0; display: flex; justify-content: center; align-items: center; min-height: 100vh; background: #0f0c29; font-family: 'Segoe UI', sans-serif; }
+        .glass-card { background: rgba(255, 255, 255, 0.05); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border-radius: 30px; border: 1px solid rgba(255, 255, 255, 0.1); padding: 30px; width: 85%; max-width: 320px; box-shadow: 0 20px 50px rgba(0,0,0,0.5); text-align: center; color: white; }
+        h2 { font-weight: 300; margin-bottom: 25px; letter-spacing: 2px; }
+        .input-group { text-align: left; margin-bottom: 15px; }
+        label { font-size: 10px; text-transform: uppercase; opacity: 0.5; margin-left: 10px; letter-spacing: 1px; }
+        input { width: 100%; background: rgba(255, 255, 255, 0.07); border: 1px solid rgba(255, 255, 255, 0.2); border-radius: 15px; padding: 15px; color: white; font-size: 16px; box-sizing: border-box; outline: none; margin-top: 5px; transition: 0.3s; }
+        input:focus { border-color: #00d2ff; background: rgba(255, 255, 255, 0.12); }
+        button { width: 100%; padding: 18px; border-radius: 15px; border: none; background: linear-gradient(45deg, #00d2ff, #3a7bd5); color: white; font-size: 14px; font-weight: bold; cursor: pointer; transition: 0.3s; text-transform: uppercase; margin-top: 10px; }
+        button:active { transform: scale(0.95); }
+        #status { margin-top: 20px; font-size: 12px; height: 1.2rem; opacity: 0.8; }
     </style>
 </head>
 <body>
 
 <div class="glass-card">
-    <h2>Editor</h2>
+    <h2>Finder</h2>
     
-    <div class="grid">
-        <div class="input-group">
-            <label>Столбец (A, B...)</label>
-            <input type="text" id="colLetter" placeholder="B" maxlength="2" style="text-transform: uppercase;">
-        </div>
-        <div class="input-group">
-            <label>Строка (1, 2...)</label>
-            <input type="number" id="rowNumber" placeholder="5">
-        </div>
+    <div class="input-group">
+        <label>Имя в 1-м столбце (Кого ищем?)</label>
+        <input type="text" id="searchName" placeholder="Напр: Глеб">
     </div>
 
     <div class="input-group">
-        <label>Данные</label>
+        <label>Буква столбца (Куда пишем?)</label>
+        <input type="text" id="colLetter" placeholder="B" maxlength="2" style="text-transform: uppercase;">
+    </div>
+
+    <div class="input-group">
+        <label>Новые данные</label>
         <input type="text" id="val" placeholder="Введите текст">
     </div>
 
-    <button id="mainBtn" onclick="sendData()">ОБНОВИТЬ ЯЧЕЙКУ</button>
+    <button id="mainBtn" onclick="sendData()">Обновить данные</button>
     <div id="status">Готов</div>
 </div>
 
@@ -58,26 +55,27 @@
         const btn = document.getElementById('mainBtn');
         const status = document.getElementById('status');
         
+        const name = document.getElementById('searchName').value.trim();
         const letter = document.getElementById('colLetter').value.trim();
-        const row = document.getElementById('rowNumber').value;
         const val = document.getElementById('val').value;
 
-        if(!letter || !row || !val) {
+        if(!name || !letter || !val) {
             status.innerText = "⚠️ Заполни все поля!";
             return;
         }
 
         const colIndex = letterToColumn(letter);
         btn.disabled = true;
-        status.innerText = "⏳ Сохранение...";
+        status.innerText = "🔍 Поиск " + name + "...";
 
         try {
-            // Отправляем и колонку, и строку
-            const finalUrl = `${url}?col=${colIndex}&row=${row}&val=${encodeURIComponent(val)}`;
+            const finalUrl = `${url}?col=${colIndex}&searchName=${encodeURIComponent(name)}&val=${encodeURIComponent(val)}`;
             
+            // В режиме no-cors мы не увидим текст ошибки от Google, 
+            // поэтому здесь логика просто на отправку.
             await fetch(finalUrl, { method: 'POST', mode: 'no-cors' });
 
-            status.innerText = `✅ Записано в ${letter.toUpperCase()}${row}`;
+            status.innerText = `✅ Запрос отправлен для ${name}`;
             document.getElementById('val').value = "";
         } catch (e) {
             status.innerText = "❌ Ошибка сети";
