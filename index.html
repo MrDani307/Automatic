@@ -3,42 +3,43 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Search & Edit</title>
+    <title>Mass Update</title>
     <style>
-        body { margin: 0; padding: 0; display: flex; justify-content: center; align-items: center; min-height: 100vh; background: #0f0c29; font-family: 'Segoe UI', sans-serif; }
-        .glass-card { background: rgba(255, 255, 255, 0.05); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border-radius: 30px; border: 1px solid rgba(255, 255, 255, 0.1); padding: 30px; width: 85%; max-width: 320px; box-shadow: 0 20px 50px rgba(0,0,0,0.5); text-align: center; color: white; }
-        h2 { font-weight: 300; margin-bottom: 25px; letter-spacing: 2px; }
+        body { margin: 0; padding: 0; display: flex; justify-content: center; align-items: center; min-height: 100vh; background: #000428; background: linear-gradient(to right, #004e92, #000428); font-family: 'Segoe UI', sans-serif; }
+        .glass-card { background: rgba(255, 255, 255, 0.05); backdrop-filter: blur(15px); border-radius: 25px; border: 1px solid rgba(255, 255, 255, 0.1); padding: 25px; width: 90%; max-width: 350px; box-shadow: 0 20px 50px rgba(0,0,0,0.5); text-align: center; color: white; }
+        h2 { font-weight: 300; margin-bottom: 20px; color: #00d2ff; }
         .input-group { text-align: left; margin-bottom: 15px; }
-        label { font-size: 10px; text-transform: uppercase; opacity: 0.5; margin-left: 10px; letter-spacing: 1px; }
-        input { width: 100%; background: rgba(255, 255, 255, 0.07); border: 1px solid rgba(255, 255, 255, 0.2); border-radius: 15px; padding: 15px; color: white; font-size: 16px; box-sizing: border-box; outline: none; margin-top: 5px; transition: 0.3s; }
-        input:focus { border-color: #00d2ff; background: rgba(255, 255, 255, 0.12); }
-        button { width: 100%; padding: 18px; border-radius: 15px; border: none; background: linear-gradient(45deg, #00d2ff, #3a7bd5); color: white; font-size: 14px; font-weight: bold; cursor: pointer; transition: 0.3s; text-transform: uppercase; margin-top: 10px; }
-        button:active { transform: scale(0.95); }
-        #status { margin-top: 20px; font-size: 12px; height: 1.2rem; opacity: 0.8; }
+        label { font-size: 10px; text-transform: uppercase; opacity: 0.6; margin-left: 5px; }
+        input, textarea { width: 100%; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.2); border-radius: 10px; padding: 12px; color: white; font-size: 14px; box-sizing: border-box; outline: none; margin-top: 5px; font-family: inherit; }
+        textarea { height: 80px; resize: none; }
+        input:focus, textarea:focus { border-color: #00d2ff; }
+        button { width: 100%; padding: 16px; border-radius: 12px; border: none; background: #00d2ff; color: #fff; font-size: 15px; font-weight: bold; cursor: pointer; transition: 0.3s; margin-top: 10px; }
+        button:active { transform: scale(0.98); }
+        #status { margin-top: 15px; font-size: 12px; color: #00d2ff; }
     </style>
 </head>
 <body>
 
 <div class="glass-card">
-    <h2>Finder</h2>
+    <h2>Mass Editor</h2>
     
     <div class="input-group">
-        <label>Имя в 1-м столбце (Кого ищем?)</label>
-        <input type="text" id="searchName" placeholder="Напр: Глеб">
+        <label>Список имен (через пробел, запятую и т.д.)</label>
+        <textarea id="searchNames" placeholder="Глеб, Иван 1.Саня Петр"></textarea>
     </div>
 
     <div class="input-group">
-        <label>Буква столбца (Куда пишем?)</label>
+        <label>Буква столбца</label>
         <input type="text" id="colLetter" placeholder="B" maxlength="2" style="text-transform: uppercase;">
     </div>
 
     <div class="input-group">
-        <label>Новые данные</label>
-        <input type="text" id="val" placeholder="Введите текст">
+        <label>Что вписать всем?</label>
+        <input type="text" id="val" placeholder="Напр: Оплачено">
     </div>
 
-    <button id="mainBtn" onclick="sendData()">Обновить данные</button>
-    <div id="status">Готов</div>
+    <button id="mainBtn" onclick="sendData()">ОБНОВИТЬ ВСЕХ</button>
+    <div id="status">Готов к массовой обработке</div>
 </div>
 
 <script>
@@ -55,28 +56,26 @@
         const btn = document.getElementById('mainBtn');
         const status = document.getElementById('status');
         
-        const name = document.getElementById('searchName').value.trim();
+        const names = document.getElementById('searchNames').value;
         const letter = document.getElementById('colLetter').value.trim();
         const val = document.getElementById('val').value;
 
-        if(!name || !letter || !val) {
+        if(!names || !letter || !val) {
             status.innerText = "⚠️ Заполни все поля!";
             return;
         }
 
         const colIndex = letterToColumn(letter);
         btn.disabled = true;
-        status.innerText = "🔍 Поиск " + name + "...";
+        status.innerText = "⏳ Обработка списка...";
 
         try {
-            const finalUrl = `${url}?col=${colIndex}&searchName=${encodeURIComponent(name)}&val=${encodeURIComponent(val)}`;
+            const finalUrl = `${url}?col=${colIndex}&searchName=${encodeURIComponent(names)}&val=${encodeURIComponent(val)}`;
             
-            // В режиме no-cors мы не увидим текст ошибки от Google, 
-            // поэтому здесь логика просто на отправку.
             await fetch(finalUrl, { method: 'POST', mode: 'no-cors' });
 
-            status.innerText = `✅ Запрос отправлен для ${name}`;
-            document.getElementById('val').value = "";
+            status.innerText = "✅ Запрос отправлен! Синхронизация...";
+            document.getElementById('searchNames').value = "";
         } catch (e) {
             status.innerText = "❌ Ошибка сети";
         } finally {
