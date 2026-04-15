@@ -3,9 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Smart Mass Editor</title>
+    <title>Liquid Glass Editor</title>
     <style>
-        /* Дизайн в стиле матового стекла (Liquid Glass) */
         body { 
             margin: 0; 
             padding: 0; 
@@ -13,62 +12,54 @@
             justify-content: center; 
             align-items: center; 
             min-height: 100vh; 
-            background: linear-gradient(135deg, #0f0c29, #302b63, #24243e); 
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            background: #0f0c29; 
+            background: linear-gradient(135deg, #0f0c29 0%, #302b63 50%, #24243e 100%);
+            font-family: 'Segoe UI', sans-serif; 
+            overflow: hidden;
         }
 
         .glass-card { 
-            background: rgba(255, 255, 255, 0.05); 
-            backdrop-filter: blur(20px); 
-            -webkit-backdrop-filter: blur(20px); 
-            border-radius: 30px; 
+            background: rgba(255, 255, 255, 0.03); 
+            backdrop-filter: blur(15px); 
+            -webkit-backdrop-filter: blur(15px); 
+            border-radius: 25px; 
             border: 1px solid rgba(255, 255, 255, 0.1); 
-            padding: 30px; 
-            width: 90%; 
-            max-width: 360px; 
-            box-shadow: 0 25px 50px rgba(0,0,0,0.5); 
+            padding: 25px; 
+            width: 85%; 
+            max-width: 340px; 
+            box-shadow: 0 20px 50px rgba(0,0,0,0.6); 
             text-align: center; 
             color: white; 
         }
 
-        h2 { font-weight: 300; margin-bottom: 25px; letter-spacing: 1px; color: #00d2ff; }
+        h2 { font-weight: 300; margin-bottom: 20px; letter-spacing: 2px; color: #00d2ff; }
 
-        .input-group { text-align: left; margin-bottom: 15px; }
+        .input-group { text-align: left; margin-bottom: 12px; }
         
-        label { 
-            font-size: 10px; 
-            text-transform: uppercase; 
-            opacity: 0.6; 
-            margin-left: 8px; 
-            letter-spacing: 1px; 
-        }
+        label { font-size: 10px; text-transform: uppercase; opacity: 0.5; margin-left: 10px; }
 
         input, textarea { 
             width: 100%; 
-            background: rgba(255, 255, 255, 0.07); 
-            border: 1px solid rgba(255, 255, 255, 0.2); 
-            border-radius: 15px; 
-            padding: 15px; 
+            background: rgba(255, 255, 255, 0.05); 
+            border: 1px solid rgba(255, 255, 255, 0.15); 
+            border-radius: 12px; 
+            padding: 14px; 
             color: white; 
-            font-size: 16px; 
+            font-size: 15px; 
             box-sizing: border-box; 
             outline: none; 
             margin-top: 5px; 
-            transition: 0.3s; 
+            transition: 0.3s;
         }
 
-        textarea { height: 100px; resize: none; }
+        textarea { height: 120px; resize: none; }
 
-        input:focus, textarea:focus { 
-            border-color: #00d2ff; 
-            background: rgba(255, 255, 255, 0.12); 
-            box-shadow: 0 0 15px rgba(0, 210, 255, 0.2);
-        }
+        input:focus, textarea:focus { border-color: #00d2ff; background: rgba(255, 255, 255, 0.1); }
 
         button { 
             width: 100%; 
-            padding: 18px; 
-            border-radius: 15px; 
+            padding: 16px; 
+            border-radius: 12px; 
             border: none; 
             background: linear-gradient(45deg, #00d2ff, #3a7bd5); 
             color: white; 
@@ -77,21 +68,12 @@
             cursor: pointer; 
             transition: 0.3s; 
             text-transform: uppercase; 
-            margin-top: 15px; 
-            box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+            margin-top: 10px; 
         }
 
-        button:active { transform: scale(0.96); opacity: 0.9; }
-        
-        button:disabled { background: #555; cursor: not-allowed; }
+        button:active { transform: scale(0.97); }
 
-        #status { 
-            margin-top: 20px; 
-            font-size: 13px; 
-            min-height: 1.5rem; 
-            opacity: 0.8; 
-            color: #00d2ff;
-        }
+        #status { margin-top: 15px; font-size: 12px; color: #00d2ff; min-height: 1.2rem; }
     </style>
 </head>
 <body>
@@ -100,28 +82,25 @@
     <h2>Mass Editor</h2>
     
     <div class="input-group">
-        <label>Кого ищем? (можно через пробел)</label>
-        <textarea id="searchNames" placeholder="Напр: Глеб Сергеевич Артем Максим"></textarea>
+        <label>Список (каждый человек с новой строки)</label>
+        <textarea id="searchNames" placeholder="Глеб Сергеевич&#10;Артем&#10;Максим Иванов"></textarea>
     </div>
 
-    <div class="input-group" style="display: flex; gap: 10px;">
-        <div style="flex: 1;">
-            <label>Столбец (буква)</label>
-            <input type="text" id="colLetter" placeholder="B" maxlength="2" style="text-transform: uppercase;">
-        </div>
+    <div class="input-group">
+        <label>Столбец (буква)</label>
+        <input type="text" id="colLetter" placeholder="B" maxlength="2" style="text-transform: uppercase;">
     </div>
 
     <div class="input-group">
         <label>Что вписать?</label>
-        <input type="text" id="val" placeholder="Текст или статус">
+        <input type="text" id="val" placeholder="Напр: Готово">
     </div>
 
-    <button id="mainBtn" onclick="sendData()">Обновить таблицу</button>
-    <div id="status">Готов к работе</div>
+    <button id="mainBtn" onclick="sendData()">Обновить данные</button>
+    <div id="status">Готов</div>
 </div>
 
 <script>
-    // Конвертер буквы в цифру (A -> 1, B -> 2)
     function letterToColumn(letter) {
         let column = 0, length = letter.length;
         for (let i = 0; i < length; i++) {
@@ -131,7 +110,7 @@
     }
 
     async function sendData() {
-        // ЗАМЕНИ НА СВОЮ ССЫЛКУ ПОСЛЕ РАЗВЕРТЫВАНИЯ (Deploy)
+        // УКАЖИ СВОЮ ССЫЛКУ ТУТ:
         const url = "https://script.google.com/macros/s/AKfycbyb2FrnNQl_HWKUAwFVt7-Yv_X7rERganxUHVC9JhAUHotdOKZuFEcQUymByraPyBe2mw/exec";
         
         const btn = document.getElementById('mainBtn');
@@ -146,27 +125,27 @@
             return;
         }
 
-        // --- МАГИЯ: превращаем всё (пробелы, запятые, точки) в чистый список через запятую ---
+        // Превращаем каждую строку в отдельный элемент списка, разделяя их символом "|"
+        // Это позволит искать "Глеб Сергеевич" как одну фразу.
         let preparedNames = rawInput
-            .replace(/[\s,;\n]+/g, ',') // заменяем пробелы, переносы и запятые на одну запятую
-            .replace(/^,|,$/g, '');     // удаляем запятые в самом начале и в конце
+            .split('\n')
+            .map(name => name.trim())
+            .filter(name => name.length > 0)
+            .join('|');
 
         const colIndex = letterToColumn(letter);
         btn.disabled = true;
-        status.innerText = "⏳ Поиск и замена...";
+        status.innerText = "⏳ Синхронизация...";
 
         try {
             const finalUrl = `${url}?col=${colIndex}&searchName=${encodeURIComponent(preparedNames)}&val=${encodeURIComponent(val)}`;
             
-            await fetch(finalUrl, { 
-                method: 'POST', 
-                mode: 'no-cors' 
-            });
+            await fetch(finalUrl, { method: 'POST', mode: 'no-cors' });
 
-            status.innerText = "✅ Данные отправлены в таблицу!";
+            status.innerText = "✅ Таблица обновлена!";
             document.getElementById('searchNames').value = "";
         } catch (e) {
-            status.innerText = "❌ Ошибка сети или ссылки";
+            status.innerText = "❌ Ошибка соединения";
         } finally {
             btn.disabled = false;
         }
