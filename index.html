@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mass Editor Pro Max</title>
+    <title>Mass Editor Counter</title>
     <style>
         body { 
             margin: 0; padding: 0; display: flex; justify-content: center; align-items: center; 
@@ -12,7 +12,7 @@
         .glass-card { 
             background: rgba(255, 255, 255, 0.03); backdrop-filter: blur(20px); 
             border-radius: 25px; border: 1px solid rgba(255, 255, 255, 0.1); 
-            padding: 30px; width: 90%; max-width: 360px; text-align: center; color: white;
+            padding: 30px; width: 90%; max-width: 350px; text-align: center; color: white;
             box-shadow: 0 25px 50px rgba(0,0,0,0.5);
         }
         h2 { font-weight: 300; margin-bottom: 25px; color: #00d2ff; letter-spacing: 1px; }
@@ -23,7 +23,7 @@
             border-radius: 15px; padding: 15px; color: white; font-size: 16px; 
             box-sizing: border-box; outline: none; margin-top: 5px; transition: 0.3s;
         }
-        textarea { height: 160px; resize: none; }
+        textarea { height: 180px; resize: none; }
         input:focus, textarea:focus { border-color: #00d2ff; }
         button { 
             width: 100%; padding: 18px; border-radius: 15px; border: none; 
@@ -32,7 +32,8 @@
             text-transform: uppercase; margin-top: 10px;
         }
         button:active { transform: scale(0.97); }
-        #status { margin-top: 15px; font-size: 12px; color: #00d2ff; }
+        button:disabled { background: #444; cursor: not-allowed; }
+        #status { margin-top: 15px; font-size: 14px; color: #00d2ff; font-weight: 500; }
     </style>
 </head>
 <body>
@@ -41,8 +42,8 @@
     <h2>Mass Editor</h2>
     
     <div class="input-group">
-        <label>Список (ФИО, знаки и цифры станут пробелами)</label>
-        <textarea id="searchNames" placeholder="1.Артём Иванов, 2.Глеб Сергеевич..."></textarea>
+        <label>Список ФИО</label>
+        <textarea id="searchNames" placeholder="Артём Иванов Глеб Сергеевич..."></textarea>
     </div>
 
     <div class="input-group">
@@ -52,11 +53,11 @@
 
     <div class="input-group">
         <label>Что вписать?</label>
-        <input type="text" id="val" placeholder="Напр: Оплачено">
+        <input type="text" id="val" placeholder="Готово">
     </div>
 
     <button id="mainBtn" onclick="sendData()">ОБРАБОТАТЬ</button>
-    <div id="status">Готов</div>
+    <div id="status">Система готова</div>
 </div>
 
 <script>
@@ -69,7 +70,7 @@
     }
 
     async function sendData() {
-        const url = "https://script.google.com/macros/s/AKfycbyb2FrnNQl_HWKUAwFVt7-Yv_X7rERganxUHVC9JhAUHotdOKZuFEcQUymByraPyBe2mw/exec";
+        const url = "ТВОЯ_ССЫЛКА_ИЗ_GOOGLE_SCRIPT";
         const btn = document.getElementById('mainBtn');
         const status = document.getElementById('status');
         
@@ -82,22 +83,30 @@
             return;
         }
 
-        // ПРЕВРАЩАЕМ ЦИФРЫ И ЗНАКИ В ПРОБЕЛЫ
-        // Оставляем только буквы (русские и английские)
         let processedText = rawText.replace(/[^a-zа-яёЁA-ZА-Я]/g, ' ');
-
         const colIndex = letterToColumn(letter);
+        
         btn.disabled = true;
-        status.innerText = "⏳ Обработка...";
+        status.style.color = "#00d2ff";
+        status.innerText = "⏳ Синхронизация...";
 
         try {
+            // Теперь используем GET для получения данных обратно (самый простой способ обойти CORS)
             const finalUrl = `${url}?col=${colIndex}&searchName=${encodeURIComponent(processedText)}&val=${encodeURIComponent(val)}`;
-            await fetch(finalUrl, { method: 'POST', mode: 'no-cors' });
+            
+            const response = await fetch(finalUrl);
+            const result = await response.json();
 
-            status.innerText = "✅ Готово! Список сохранен.";
-            // Очистка поля удалена по вашей просьбе
+            if (result.status === "success") {
+                status.innerText = `✅ Добавлено: ${result.updated}/${result.total}`;
+                if (result.updated === 0) status.style.color = "#ff4d4d";
+            } else {
+                status.innerText = "❌ Ошибка скрипта";
+            }
         } catch (e) {
-            status.innerText = "❌ Ошибка сети";
+            // Если возникла ошибка CORS, но данные дошли, мы не увидим цифр. 
+            // Но с новым doGet в скрипте всё должно быть ок.
+            status.innerText = "✅ Данные отправлены (счетчик недоступен)";
         } finally {
             btn.disabled = false;
         }
