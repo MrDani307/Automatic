@@ -3,59 +3,36 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mass Editor Counter</title>
+    <title>Mass Editor Counter Fix</title>
     <style>
-        body { 
-            margin: 0; padding: 0; display: flex; justify-content: center; align-items: center; 
-            min-height: 100vh; background: #0b101b; font-family: 'Segoe UI', sans-serif; 
-        }
-        .glass-card { 
-            background: rgba(255, 255, 255, 0.03); backdrop-filter: blur(20px); 
-            border-radius: 25px; border: 1px solid rgba(255, 255, 255, 0.1); 
-            padding: 30px; width: 90%; max-width: 350px; text-align: center; color: white;
-            box-shadow: 0 25px 50px rgba(0,0,0,0.5);
-        }
-        h2 { font-weight: 300; margin-bottom: 25px; color: #00d2ff; letter-spacing: 1px; }
+        body { margin: 0; padding: 0; display: flex; justify-content: center; align-items: center; min-height: 100vh; background: #0b101b; font-family: 'Segoe UI', sans-serif; }
+        .glass-card { background: rgba(255, 255, 255, 0.03); backdrop-filter: blur(20px); border-radius: 25px; border: 1px solid rgba(255, 255, 255, 0.1); padding: 30px; width: 90%; max-width: 350px; text-align: center; color: white; box-shadow: 0 25px 50px rgba(0,0,0,0.5); }
+        h2 { font-weight: 300; margin-bottom: 25px; color: #00d2ff; }
         .input-group { text-align: left; margin-bottom: 15px; }
         label { font-size: 10px; text-transform: uppercase; opacity: 0.5; margin-left: 5px; }
-        input, textarea { 
-            width: 100%; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); 
-            border-radius: 15px; padding: 15px; color: white; font-size: 16px; 
-            box-sizing: border-box; outline: none; margin-top: 5px; transition: 0.3s;
-        }
+        input, textarea { width: 100%; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); border-radius: 15px; padding: 15px; color: white; font-size: 16px; box-sizing: border-box; outline: none; margin-top: 5px; }
         textarea { height: 180px; resize: none; }
-        input:focus, textarea:focus { border-color: #00d2ff; }
-        button { 
-            width: 100%; padding: 18px; border-radius: 15px; border: none; 
-            background: linear-gradient(45deg, #00d2ff, #3a7bd5); color: white; 
-            font-size: 14px; font-weight: bold; cursor: pointer; transition: 0.3s; 
-            text-transform: uppercase; margin-top: 10px;
-        }
+        button { width: 100%; padding: 18px; border-radius: 15px; border: none; background: linear-gradient(45deg, #00d2ff, #3a7bd5); color: white; font-size: 14px; font-weight: bold; cursor: pointer; transition: 0.3s; text-transform: uppercase; margin-top: 10px; }
         button:active { transform: scale(0.97); }
-        button:disabled { background: #444; cursor: not-allowed; }
-        #status { margin-top: 15px; font-size: 14px; color: #00d2ff; font-weight: 500; }
+        #status { margin-top: 15px; font-size: 14px; color: #00d2ff; }
     </style>
 </head>
 <body>
 
 <div class="glass-card">
     <h2>Mass Editor</h2>
-    
     <div class="input-group">
         <label>Список ФИО</label>
-        <textarea id="searchNames" placeholder="Артём Иванов Глеб Сергеевич..."></textarea>
+        <textarea id="searchNames" placeholder="Иван Петров Глеб Сергеевич..."></textarea>
     </div>
-
     <div class="input-group">
-        <label>Буква столбца</label>
+        <label>Столбец (буква)</label>
         <input type="text" id="colLetter" placeholder="B" maxlength="2" style="text-transform: uppercase;">
     </div>
-
     <div class="input-group">
         <label>Что вписать?</label>
         <input type="text" id="val" placeholder="Готово">
     </div>
-
     <button id="mainBtn" onclick="sendData()">ОБРАБОТАТЬ</button>
     <div id="status">Система готова</div>
 </div>
@@ -70,7 +47,9 @@
     }
 
     async function sendData() {
-        const url = "ТВОЯ_ССЫЛКА_ИЗ_GOOGLE_SCRIPT";
+        // !!! ЗАМЕНИ ЭТУ ССЫЛКУ НА СВОЮ !!!
+        const url = "https://script.google.com/macros/s/AKfycbyb2FrnNQl_HWKUAwFVt7-Yv_X7rERganxUHVC9JhAUHotdOKZuFEcQUymByraPyBe2mw/exec";
+        
         const btn = document.getElementById('mainBtn');
         const status = document.getElementById('status');
         
@@ -87,31 +66,27 @@
         const colIndex = letterToColumn(letter);
         
         btn.disabled = true;
-        status.style.color = "#00d2ff";
-        status.innerText = "⏳ Синхронизация...";
+        status.innerText = "⏳ Обработка...";
 
         try {
-            // Теперь используем GET для получения данных обратно (самый простой способ обойти CORS)
             const finalUrl = `${url}?col=${colIndex}&searchName=${encodeURIComponent(processedText)}&val=${encodeURIComponent(val)}`;
             
+            // Используем режим 'cors' с обработкой текста
             const response = await fetch(finalUrl);
-            const result = await response.json();
+            const resultText = await response.text();
 
-            if (result.status === "success") {
-                status.innerText = `✅ Добавлено: ${result.updated}/${result.total}`;
-                if (result.updated === 0) status.style.color = "#ff4d4d";
+            if (resultText.includes('/')) {
+                status.innerText = `✅ Добавлено: ${resultText}`;
             } else {
-                status.innerText = "❌ Ошибка скрипта";
+                status.innerText = "❌ Ошибка: " + resultText;
             }
         } catch (e) {
-            // Если возникла ошибка CORS, но данные дошли, мы не увидим цифр. 
-            // Но с новым doGet в скрипте всё должно быть ок.
-            status.innerText = "✅ Данные отправлены (счетчик недоступен)";
+            // Если fetch всё же ругается на CORS, данные обычно всё равно уходят
+            status.innerText = "✅ Отправлено (проверь таблицу)";
         } finally {
             btn.disabled = false;
         }
     }
 </script>
-
 </body>
 </html>
