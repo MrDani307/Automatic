@@ -3,18 +3,23 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mass Editor Counter Fix</title>
+    <title>Mass Editor Pro+</title>
     <style>
-        body { margin: 0; padding: 0; display: flex; justify-content: center; align-items: center; min-height: 100vh; background: #0b101b; font-family: 'Segoe UI', sans-serif; }
-        .glass-card { background: rgba(255, 255, 255, 0.03); backdrop-filter: blur(20px); border-radius: 25px; border: 1px solid rgba(255, 255, 255, 0.1); padding: 30px; width: 90%; max-width: 350px; text-align: center; color: white; box-shadow: 0 25px 50px rgba(0,0,0,0.5); }
-        h2 { font-weight: 300; margin-bottom: 25px; color: #00d2ff; }
-        .input-group { text-align: left; margin-bottom: 15px; }
+        body { margin: 0; padding: 0; display: flex; justify-content: center; align-items: center; min-height: 100vh; background: #0b101b; font-family: 'Segoe UI', sans-serif; color: white; }
+        .glass-card { background: rgba(255, 255, 255, 0.03); backdrop-filter: blur(20px); border-radius: 25px; border: 1px solid rgba(255, 255, 255, 0.1); padding: 30px; width: 90%; max-width: 380px; text-align: center; box-shadow: 0 25px 50px rgba(0,0,0,0.5); }
+        h2 { font-weight: 300; margin-bottom: 20px; color: #00d2ff; }
+        .input-group { text-align: left; margin-bottom: 12px; }
         label { font-size: 10px; text-transform: uppercase; opacity: 0.5; margin-left: 5px; }
-        input, textarea { width: 100%; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); border-radius: 15px; padding: 15px; color: white; font-size: 16px; box-sizing: border-box; outline: none; margin-top: 5px; }
-        textarea { height: 180px; resize: none; }
-        button { width: 100%; padding: 18px; border-radius: 15px; border: none; background: linear-gradient(45deg, #00d2ff, #3a7bd5); color: white; font-size: 14px; font-weight: bold; cursor: pointer; transition: 0.3s; text-transform: uppercase; margin-top: 10px; }
+        input, textarea { width: 100%; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; padding: 12px; color: white; font-size: 15px; box-sizing: border-box; outline: none; margin-top: 5px; }
+        textarea { height: 140px; resize: none; }
+        button { width: 100%; padding: 16px; border-radius: 12px; border: none; background: linear-gradient(45deg, #00d2ff, #3a7bd5); color: white; font-size: 13px; font-weight: bold; cursor: pointer; transition: 0.3s; text-transform: uppercase; margin-top: 10px; }
         button:active { transform: scale(0.97); }
         #status { margin-top: 15px; font-size: 14px; color: #00d2ff; }
+        
+        /* Стили для списка недобавленных */
+        #missedContainer { display: none; margin-top: 15px; background: rgba(255, 77, 77, 0.1); border-radius: 12px; padding: 10px; border: 1px solid rgba(255, 77, 77, 0.2); text-align: left; }
+        #missedList { font-size: 12px; color: #ff9e9e; margin: 5px 0 0 0; padding-left: 20px; }
+        .toggle-btn { background: none; border: 1px solid rgba(0, 210, 255, 0.3); color: #00d2ff; padding: 5px 10px; font-size: 11px; margin-top: 10px; width: auto; text-transform: none; display: none; }
     </style>
 </head>
 <body>
@@ -23,18 +28,27 @@
     <h2>Mass Editor</h2>
     <div class="input-group">
         <label>Список ФИО</label>
-        <textarea id="searchNames" placeholder="Иван Петров Глеб Сергеевич..."></textarea>
+        <textarea id="searchNames" placeholder="Артём Иванов Глеб Сергеевич..."></textarea>
     </div>
-    <div class="input-group">
-        <label>Столбец (буква)</label>
-        <input type="text" id="colLetter" placeholder="B" maxlength="2" style="text-transform: uppercase;">
-    </div>
-    <div class="input-group">
-        <label>Что вписать?</label>
-        <input type="text" id="val" placeholder="Готово">
+    <div style="display: flex; gap: 10px;">
+        <div class="input-group" style="flex: 1;">
+            <label>Столбец</label>
+            <input type="text" id="colLetter" placeholder="B" maxlength="2" style="text-transform: uppercase;">
+        </div>
+        <div class="input-group" style="flex: 2;">
+            <label>Что вписать?</label>
+            <input type="text" id="val" placeholder="Готово">
+        </div>
     </div>
     <button id="mainBtn" onclick="sendData()">ОБРАБОТАТЬ</button>
-    <div id="status">Система готова</div>
+    <div id="status">Готов</div>
+    
+    <button id="toggleMissed" class="toggle-btn" onclick="toggleMissed()">Показать недобавленных</button>
+    
+    <div id="missedContainer">
+        <label style="color: #ff4d4d;">Не найдено в таблице:</label>
+        <ul id="missedList"></ul>
+    </div>
 </div>
 
 <script>
@@ -46,13 +60,26 @@
         return column;
     }
 
+    function toggleMissed() {
+        const container = document.getElementById('missedContainer');
+        const btn = document.getElementById('toggleMissed');
+        if (container.style.display === 'block') {
+            container.style.display = 'none';
+            btn.innerText = 'Показать недобавленных';
+        } else {
+            container.style.display = 'block';
+            btn.innerText = 'Скрыть список';
+        }
+    }
+
     async function sendData() {
-        // !!! ЗАМЕНИ ЭТУ ССЫЛКУ НА СВОЮ !!!
         const url = "https://script.google.com/macros/s/AKfycbyb2FrnNQl_HWKUAwFVt7-Yv_X7rERganxUHVC9JhAUHotdOKZuFEcQUymByraPyBe2mw/exec";
-        
         const btn = document.getElementById('mainBtn');
         const status = document.getElementById('status');
-        
+        const missedBtn = document.getElementById('toggleMissed');
+        const missedList = document.getElementById('missedList');
+        const missedContainer = document.getElementById('missedContainer');
+
         let rawText = document.getElementById('searchNames').value;
         const letter = document.getElementById('colLetter').value.trim();
         const val = document.getElementById('val').value;
@@ -67,22 +94,22 @@
         
         btn.disabled = true;
         status.innerText = "⏳ Обработка...";
+        missedBtn.style.display = 'none';
+        missedContainer.style.display = 'none';
 
         try {
             const finalUrl = `${url}?col=${colIndex}&searchName=${encodeURIComponent(processedText)}&val=${encodeURIComponent(val)}`;
-            
-            // Используем режим 'cors' с обработкой текста
             const response = await fetch(finalUrl);
-            const resultText = await response.text();
+            const data = await response.json();
 
-            if (resultText.includes('/')) {
-                status.innerText = `✅ Добавлено: ${resultText}`;
-            } else {
-                status.innerText = "❌ Ошибка: " + resultText;
+            status.innerText = `✅ Добавлено: ${data.updated}/${data.total}`;
+            
+            if (data.missed && data.missed.length > 0) {
+                missedList.innerHTML = data.missed.map(name => `<li>${name}</li>`).join('');
+                missedBtn.style.display = 'inline-block';
             }
         } catch (e) {
-            // Если fetch всё же ругается на CORS, данные обычно всё равно уходят
-            status.innerText = "✅ Отправлено (проверь таблицу)";
+            status.innerText = "✅ Отправлено (счетчик недоступен)";
         } finally {
             btn.disabled = false;
         }
