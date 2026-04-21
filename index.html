@@ -3,45 +3,156 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Центр Управления</title>
+    <title>Панель управления</title>
     <style>
-        body { font-family: -apple-system, sans-serif; background: #f0f2f5; padding: 15px; display: flex; justify-content: center; }
-        .card { background: white; padding: 25px; border-radius: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); width: 100%; max-width: 420px; }
-        h2 { text-align: center; color: #1a73e8; margin-top: 0; }
-        label { display: block; margin: 15px 0 5px; font-weight: 600; color: #444; font-size: 13px; }
-        select, textarea, input, button { width: 100%; padding: 14px; margin-bottom: 10px; border: 1px solid #dcdcdc; border-radius: 12px; box-sizing: border-box; font-size: 16px; outline: none; }
-        textarea { height: 120px; resize: none; }
-        button { background: #1a73e8; color: white; border: none; cursor: pointer; font-weight: bold; margin-top: 10px; }
-        button:disabled { background: #ccc; }
-        .status { padding: 15px; border-radius: 12px; display: none; margin-top: 15px; font-size: 14px; white-space: pre-wrap; line-height: 1.4; border: 1px solid transparent; }
-        .success { background: #e6f4ea; color: #1e8e3e; border-color: #ceead6; }
-        .error { background: #fce8e6; color: #d93025; border-color: #fad2cf; }
+        :root {
+            --bg: #0f0f0f;
+            --card-bg: rgba(30, 30, 30, 0.6);
+            --accent: #bb86fc;
+            --text: #e0e0e0;
+            --border: rgba(255, 255, 255, 0.1);
+        }
+
+        body {
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            backdrop-filter: blur(10px);
+        }
+
+        .card {
+            background: var(--card-bg);
+            padding: 30px;
+            border-radius: 24px;
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.8);
+            border: 1px solid var(--border);
+            width: 100%;
+            max-width: 380px;
+            backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
+        }
+
+        h2 {
+            text-align: center;
+            font-weight: 300;
+            letter-spacing: 1px;
+            margin-bottom: 25px;
+            color: var(--accent);
+        }
+
+        label {
+            display: block;
+            margin: 15px 0 8px 5px;
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: #888;
+        }
+
+        /* Убираем синий эффект при фокусе */
+        select, textarea, input, button {
+            width: 100%;
+            padding: 14px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            color: #fff;
+            font-size: 15px;
+            outline: none !important; /* Тот самый запрет на синий контур */
+            transition: all 0.3s ease;
+            box-sizing: border-box;
+        }
+
+        select:focus, textarea:focus, input:focus {
+            background: rgba(255, 255, 255, 0.08);
+            border-color: var(--accent);
+        }
+
+        textarea {
+            height: 100px;
+            resize: none;
+            line-height: 1.4;
+        }
+
+        button {
+            background: var(--accent);
+            color: #000;
+            border: none;
+            margin-top: 25px;
+            font-weight: 700;
+            cursor: pointer;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            box-shadow: 0 4px 15px rgba(187, 134, 252, 0.2);
+        }
+
+        button:hover {
+            opacity: 0.9;
+            transform: translateY(-1px);
+        }
+
+        button:active {
+            transform: translateY(1px);
+        }
+
+        button:disabled {
+            background: #444;
+            color: #888;
+            cursor: not-allowed;
+            box-shadow: none;
+        }
+
+        .status {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 14px;
+            font-size: 13px;
+            display: none;
+            text-align: center;
+            border: 1px solid transparent;
+            animation: fadeIn 0.4s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(5px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .success { background: rgba(76, 175, 80, 0.1); color: #81c784; border-color: rgba(76, 175, 80, 0.2); }
+        .error { background: rgba(244, 67, 54, 0.1); color: #e57373; border-color: rgba(244, 67, 54, 0.2); }
+
+        ::placeholder { color: #555; }
     </style>
 </head>
 <body>
 
 <div class="card">
-    <h2>🚀 Табличный Центр</h2>
+    <h2>CONTROL</h2>
 
-    <label>🎯 Выберите макрос (скрипт):</label>
+    <label>Объект</label>
     <select id="tableSelect">
-        <option value="https://script.google.com/macros/s/AKfycbyb2FrnNQl_HWKUAwFVt7-Yv_X7rERganxUHVC9JhAUHotdOKZuFEcQUymByraPyBe2mw/exec">Тестовая таблица</option>
+        <option value="https://script.google.com/macros/s/AKfycbyb2FrnNQl_HWKUAwFVt7-Yv_X7rERganxUHVC9JhAUHotdOKZuFEcQUymByraPyBe2mw/exec">Тест</option>
         <option value="https://script.google.com/macros/s/AKfycbzDOjIpIyatrsNDpbisFFNCVtYchgflY9CuCB5cNsQ1bpaNJDyhfS_hrfbAXrU_qmKg/exec">Березка</option>
     </select>
 
-    <label>🔗 Ссылка на лист (с gid):</label>
-    <input type="text" id="sheetUrl" value="https://docs.google.com/spreadsheets/d/1e6uk3LObdup1tZmVYiUI35zrs_KvRjQkOo5o7mHmirM/edit#gid=1435487189">
+    <label>Ссылка на лист</label>
+    <input type="text" id="sheetUrl" placeholder="Вставь ссылку из браузера">
 
-    <label>📊 Столбец:</label>
+    <label>Столбец</label>
     <input type="text" id="columnLetter" value="B">
 
-    <label>✍️ Значение:</label>
+    <label>Символ</label>
     <input type="text" id="valueToSet" value="1">
 
-    <label>👥 Список имен:</label>
-    <textarea id="namesInput" placeholder="Имена через Enter..."></textarea>
+    <label>Список</label>
+    <textarea id="namesInput" placeholder="Имена..."></textarea>
 
-    <button id="sendBtn">ОБРАБОТАТЬ</button>
+    <button id="sendBtn">Запустить</button>
     <div id="statusBox" class="status"></div>
 </div>
 
@@ -57,31 +168,33 @@
         const val = document.getElementById('valueToSet').value;
 
         if (!names.trim() || !col || !sheetUrl) {
-            showStatus('⚠️ Заполни все поля!', 'error');
+            showStatus('Заполни пустые поля', 'error');
             return;
         }
 
         btn.disabled = true;
-        btn.innerText = '⏳ Соединение...';
+        btn.innerText = 'Синхронизация...';
         statusBox.style.display = 'none';
 
         try {
-            // Отправляем полную ссылку в скрипт
             const finalUrl = `${scriptUrl}?searchName=${encodeURIComponent(names)}&col=${encodeURIComponent(col)}&val=${encodeURIComponent(val)}&sheetUrl=${encodeURIComponent(sheetUrl)}`;
+            
+            // Используем no-cors если будут проблемы с политикой, 
+            // но для JSON ответа от Google обычно нужен стандартный fetch
             const response = await fetch(finalUrl);
             const data = await response.json();
 
             if (data.updated !== undefined) {
-                showStatus(`✅ Готово!\nЛист: ${data.usedSheet}\nОбновлено: ${data.updated} из ${data.total}`, 'success');
+                showStatus(`Готово: ${data.updated} / ${data.total}\nЛист: ${data.usedSheet}`, 'success');
                 if (data.updated > 0) document.getElementById('namesInput').value = '';
             } else {
-                showStatus('❌ Ошибка: ' + (data.error || 'неизвестно'), 'error');
+                showStatus('Ошибка скрипта', 'error');
             }
         } catch (err) {
-            showStatus('❌ Ошибка сети! Проверь VPN и доступ скрипта.', 'error');
+            showStatus('Ошибка доступа или сети', 'error');
         } finally {
             btn.disabled = false;
-            btn.innerText = 'ОБРАБОТАТЬ';
+            btn.innerText = 'Запустить';
         }
     };
 
