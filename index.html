@@ -3,14 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Управление Таблицами</title>
+    <title>Панель Управления</title>
     <style>
         body { font-family: -apple-system, sans-serif; background: #f0f2f5; padding: 15px; display: flex; justify-content: center; }
-        .card { background: white; padding: 25px; border-radius: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.08); width: 100%; max-width: 420px; border: 1px solid #e0e0e0; }
+        .card { background: white; padding: 25px; border-radius: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); width: 100%; max-width: 420px; }
         h2 { text-align: center; color: #1a73e8; margin-top: 0; }
-        label { display: block; margin: 15px 0 5px; font-weight: 600; color: #444; font-size: 14px; }
+        label { display: block; margin: 15px 0 5px; font-weight: 600; color: #444; }
         select, textarea, input, button { width: 100%; padding: 14px; margin-bottom: 10px; border: 1px solid #dcdcdc; border-radius: 12px; box-sizing: border-box; font-size: 16px; outline: none; }
         textarea { height: 140px; resize: none; }
+        input#columnLetter { text-transform: uppercase; } /* Делает буквы большими */
         button { background: #1a73e8; color: white; border: none; cursor: pointer; font-weight: bold; margin-top: 10px; }
         button:active { transform: scale(0.98); }
         button:disabled { background: #ccc; }
@@ -24,20 +25,20 @@
 <div class="card">
     <h2>🚀 Табличный Центр</h2>
 
-    <label>🎯 Проект:</label>
+    <label>🎯 Выберите таблицу:</label>
     <select id="tableSelect">
         <option value="https://script.google.com/macros/s/AKfycbyb2FrnNQl_HWKUAwFVt7-Yv_X7rERganxUHVC9JhAUHotdOKZuFEcQUymByraPyBe2mw/exec">Тестовая таблица</option>
-        <option value="https://script.google.com/macros/s/AKfycbyb2FrnNQl_HWKUAwFVt7-Yv_X7rERganxUHVC9JhAUHotdOKZuFEcQUymByraPyBe2mw/exec">Березка</option>
+        <option value="https://script.google.com/macros/s/AKfycbzDOjIpIyatrsNDpbisFFNCVtYchgflY9CuCB5cNsQ1bpaNJDyhfS_hrfbAXrU_qmKg/exec">Березка</option>
     </select>
 
-    <label>📊 Столбец (№):</label>
-    <input type="number" id="columnNum" value="2">
+    <label>📊 Буква столбца (например, B или C):</label>
+    <input type="text" id="columnLetter" placeholder="A, B, C..." value="B">
 
     <label>✍️ Значение:</label>
     <input type="text" id="valueToSet" value="1">
 
     <label>👥 Список имен:</label>
-    <textarea id="namesInput" placeholder="Вставьте текст с именами..."></textarea>
+    <textarea id="namesInput" placeholder="Одно имя на строку..."></textarea>
 
     <button id="sendBtn">ОБРАБОТАТЬ</button>
     <div id="statusBox" class="status"></div>
@@ -50,11 +51,11 @@
     btn.onclick = async () => {
         const scriptUrl = document.getElementById('tableSelect').value;
         const names = document.getElementById('namesInput').value;
-        const col = document.getElementById('columnNum').value;
+        const col = document.getElementById('columnLetter').value.trim();
         const val = document.getElementById('valueToSet').value;
 
-        if (!names.trim()) {
-            showStatus('⚠️ Вставьте список имен!', 'error');
+        if (!names.trim() || !col) {
+            showStatus('⚠️ Заполните все поля!', 'error');
             return;
         }
 
@@ -63,12 +64,12 @@
         statusBox.style.display = 'none';
 
         try {
-            const finalUrl = `${scriptUrl}?searchName=${encodeURIComponent(names)}&col=${col}&val=${encodeURIComponent(val)}`;
+            const finalUrl = `${scriptUrl}?searchName=${encodeURIComponent(names)}&col=${encodeURIComponent(col)}&val=${encodeURIComponent(val)}`;
             const response = await fetch(finalUrl);
             const data = await response.json();
 
             if (data.updated !== undefined) {
-                let msg = `✅ Отмечено: ${data.updated} из ${data.total}`;
+                let msg = `✅ Готово! Отмечено: ${data.updated} из ${data.total}`;
                 if (data.missed && data.missed.length > 0) {
                     msg += `\n\n❌ Не найдены:\n${data.missed.join('\n')}`;
                 }
@@ -76,7 +77,7 @@
                 if (data.updated > 0) document.getElementById('namesInput').value = '';
             }
         } catch (err) {
-            showStatus('❌ Ошибка сети или доступа!', 'error');
+            showStatus('❌ Ошибка сети! Убедитесь, что скрипт развернут как "Anyone".', 'error');
         } finally {
             btn.disabled = false;
             btn.innerText = 'ОБРАБОТАТЬ';
