@@ -3,185 +3,228 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Control Panel</title>
+    <title>Control</title>
     <style>
         :root {
-            --bg: #0a0a0a;
-            --card-bg: #141414;
+            --bg: #050505;
+            --glass: rgba(25, 25, 25, 0.7);
             --accent: #bb86fc;
             --text: #ffffff;
-            --field-bg: #1e1e1e;
-            --border: #2c2c2c;
+            --border: rgba(255, 255, 255, 0.08);
         }
 
-        /* Полная блокировка синего выделения */
+        /* Убираем синий отклик и выделение */
         * {
-            -webkit-tap-highlight-color: transparent; /* Убирает синий квадрат на мобилках */
-            outline: none !important; /* Убирает контур в браузерах */
+            -webkit-tap-highlight-color: transparent;
+            outline: none !important;
             box-sizing: border-box;
+            -webkit-user-select: none;
+            user-select: none;
+        }
+
+        input, textarea, select {
+            -webkit-user-select: text;
+            user-select: text;
         }
 
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-            background-color: var(--bg);
+            background: var(--bg);
             color: var(--text);
             margin: 0;
             display: flex;
             justify-content: center;
             align-items: center;
             height: 100vh;
-            overflow: hidden;
+            background: radial-gradient(circle at top right, #1a1a1a, #050505);
         }
 
         .card {
-            background: var(--card-bg);
-            padding: 24px;
-            border-radius: 20px;
-            width: 100%;
+            background: var(--glass);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            padding: 30px;
+            border-radius: 28px;
+            width: 90%;
             max-width: 360px;
             border: 1px solid var(--border);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.4);
         }
 
         h2 {
             text-align: center;
-            font-weight: 500;
-            font-size: 18px;
-            margin-bottom: 20px;
-            letter-spacing: 2px;
+            font-weight: 200;
+            font-size: 20px;
+            margin: 0 0 25px;
+            letter-spacing: 4px;
             color: var(--accent);
+            text-transform: uppercase;
+        }
+
+        .field-group {
+            margin-bottom: 16px;
         }
 
         label {
             display: block;
-            margin: 12px 0 6px 4px;
-            font-size: 11px;
+            margin: 0 0 6px 6px;
+            font-size: 10px;
             color: #666;
             text-transform: uppercase;
+            letter-spacing: 1px;
         }
 
         select, textarea, input {
             width: 100%;
-            padding: 12px;
-            background: var(--field-bg);
+            padding: 14px;
+            background: rgba(255, 255, 255, 0.03);
             border: 1px solid var(--border);
-            border-radius: 12px;
+            border-radius: 16px;
             color: #fff;
             font-size: 15px;
-            transition: border-color 0.2s;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
         select:focus, textarea:focus, input:focus {
             border-color: var(--accent);
+            background: rgba(255, 255, 255, 0.06);
         }
 
         textarea {
-            height: 90px;
+            height: 100px;
             resize: none;
         }
 
         button {
             width: 100%;
-            padding: 14px;
+            padding: 16px;
             background: var(--accent);
             color: #000;
             border: none;
-            border-radius: 12px;
-            margin-top: 20px;
+            border-radius: 18px;
+            margin-top: 10px;
             font-weight: 700;
-            cursor: pointer;
+            font-size: 14px;
             text-transform: uppercase;
+            letter-spacing: 1px;
+            cursor: pointer;
             transition: transform 0.1s, opacity 0.2s;
         }
 
         button:active {
-            transform: scale(0.98);
+            transform: scale(0.96);
+            opacity: 0.8;
         }
 
         button:disabled {
-            background: #333;
-            color: #555;
+            background: #222;
+            color: #444;
         }
 
         .status {
-            margin-top: 15px;
-            font-size: 13px;
+            margin-top: 20px;
+            font-size: 12px;
             text-align: center;
-            padding: 10px;
-            border-radius: 10px;
+            padding: 12px;
+            border-radius: 14px;
             display: none;
+            animation: slideUp 0.3s ease;
         }
 
-        .success { color: #81c784; background: rgba(129, 199, 132, 0.1); }
-        .error { color: #e57373; background: rgba(229, 115, 115, 0.1); }
+        @keyframes slideUp {
+            from { transform: translateY(10px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        .success { color: #b9f6ca; background: rgba(0, 200, 83, 0.1); }
+        .error { color: #ff8a80; background: rgba(213, 0, 0, 0.1); }
     </style>
 </head>
 <body>
 
 <div class="card">
-    <h2>DASHBOARD</h2>
+    <h2>COMMAND</h2>
 
-    <label>Объект</label>
-    <select id="tableSelect">
-        <option value="test">Тест</option>
-        <option value="berezka">Березка</option>
-    </select>
+    <div class="field-group">
+        <label>Объект</label>
+        <select id="target">
+            <option value="berezka">Березка</option>
+            <option value="test">Тест</option>
+        </select>
+    </div>
 
-    <label>Ссылка</label>
-    <input type="text" id="sheetUrl" placeholder="URL из браузера">
+    <div class="field-group">
+        <label>Лист</label>
+        <input type="text" id="sheetName" value="апр26">
+    </div>
 
-    <label>Столбец</label>
-    <input type="text" id="columnLetter" value="B">
+    <div style="display: flex; gap: 10px;">
+        <div class="field-group" style="flex: 1;">
+            <label>Столбец</label>
+            <input type="text" id="col" value="B">
+        </div>
+        <div class="field-group" style="flex: 1;">
+            <label>Символ</label>
+            <input type="text" id="val" value="1">
+        </div>
+    </div>
 
-    <label>Символ</label>
-    <input type="text" id="valueToSet" value="1">
+    <div class="field-group">
+        <label>Список</label>
+        <textarea id="names" placeholder="Имена..."></textarea>
+    </div>
 
-    <label>Список</label>
-    <textarea id="namesInput" placeholder="Имена..."></textarea>
-
-    <button id="sendBtn">Запустить</button>
-    <div id="statusBox" class="status"></div>
+    <button id="go">Запустить</button>
+    <div id="status" class="status"></div>
 </div>
 
 <script>
-    // Ссылки спрятаны здесь
-    const URLS = {
-        test: "https://script.google.com/macros/s/AKfycbyb2FrnNQl_HWKUAwFVt7-Yv_X7rERganxUHVC9JhAUHotdOKZuFEcQUymByraPyBe2mw/exec",
-        berezka: "https://script.google.com/macros/s/AKfycbzDOjIpIyatrsNDpbisFFNCVtYchgflY9CuCB5cNsQ1bpaNJDyhfS_hrfbAXrU_qmKg/exec"
+    // Все данные теперь тут, в интерфейсе их нет
+    const DB = {
+        test: {
+            macro: "https://script.google.com/macros/s/AKfycbyb2FrnNQl_HWKUAwFVt7-Yv_X7rERganxUHVC9JhAUHotdOKZuFEcQUymByraPyBe2mw/exec",
+            url: "https://docs.google.com/spreadsheets/d/1sc4sODaPRRHnTU_S2KviTO9hGOpnHsEnhHvsgZfuKQM/edit"
+        },
+        berezka: {
+            macro: "https://script.google.com/macros/s/AKfycbzDOjIpIyatrsNDpbisFFNCVtYchgflY9CuCB5cNsQ1bpaNJDyhfS_hrfbAXrU_qmKg/exec",
+            url: "https://docs.google.com/spreadsheets/d/1e6uk3LObdup1tZmVYiUI35zrs_KvRjQkOo5o7mHmirM/edit"
+        }
     };
 
-    const btn = document.getElementById('sendBtn');
-    const statusBox = document.getElementById('statusBox');
+    const btn = document.getElementById('go');
+    const status = document.getElementById('status');
 
     btn.onclick = async () => {
-        const type = document.getElementById('tableSelect').value;
-        const scriptUrl = URLS[type];
-        const sheetUrl = document.getElementById('sheetUrl').value.trim();
-        const names = document.getElementById('namesInput').value;
-        const col = document.getElementById('columnLetter').value.trim();
-        const val = document.getElementById('valueToSet').value;
+        const config = DB[document.getElementById('target').value];
+        const month = document.getElementById('sheetName').value.trim();
+        const names = document.getElementById('names').value;
+        const col = document.getElementById('col').value.trim();
+        const val = document.getElementById('val').value;
 
-        if (!names.trim() || !col || !sheetUrl) {
-            showStatus('Заполни поля', 'error');
+        if (!names.trim() || !month) {
+            showStatus('Пустые поля!', 'error');
             return;
         }
 
         btn.disabled = true;
-        btn.innerText = 'Жди...';
-        statusBox.style.display = 'none';
+        btn.innerText = 'Связь...';
+        status.style.display = 'none';
 
         try {
-            const finalUrl = `${scriptUrl}?searchName=${encodeURIComponent(names)}&col=${encodeURIComponent(col)}&val=${encodeURIComponent(val)}&sheetUrl=${encodeURIComponent(sheetUrl)}`;
+            // Формируем запрос: макрос + ссылка на таблицу + название листа
+            const finalUrl = `${config.macro}?searchName=${encodeURIComponent(names)}&col=${encodeURIComponent(col)}&val=${encodeURIComponent(val)}&sheetUrl=${encodeURIComponent(config.url)}&month=${encodeURIComponent(month)}`;
+            
             const response = await fetch(finalUrl);
             const data = await response.json();
 
             if (data.updated !== undefined) {
-                showStatus(`OK: ${data.updated} / ${data.total}`, 'success');
-                if (data.updated > 0) document.getElementById('namesInput').value = '';
+                showStatus(`Готово: ${data.updated}/${data.total}`, 'success');
+                if (data.updated > 0) document.getElementById('names').value = '';
             } else {
                 showStatus('Ошибка скрипта', 'error');
             }
         } catch (err) {
-            showStatus('Ошибка сети', 'error');
+            showStatus('Сеть или VPN', 'error');
         } finally {
             btn.disabled = false;
             btn.innerText = 'Запустить';
@@ -189,9 +232,9 @@
     };
 
     function showStatus(text, type) {
-        statusBox.innerText = text;
-        statusBox.className = 'status ' + type;
-        statusBox.style.display = 'block';
+        status.innerText = text;
+        status.className = 'status ' + type;
+        status.style.display = 'block';
     }
 </script>
 
