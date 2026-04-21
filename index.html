@@ -3,20 +3,69 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Панель управления таблицами</title>
+    <title>Управление Таблицами</title>
     <style>
-        body { font-family: -apple-system, system-ui, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #f0f2f5; padding: 15px; display: flex; justify-content: center; }
-        .card { background: white; padding: 25px; border-radius: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.08); width: 100%; max-width: 420px; border: 1px solid #e0e0e0; }
+        body { 
+            font-family: -apple-system, system-ui, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; 
+            background: #f0f2f5; 
+            padding: 15px; 
+            display: flex; 
+            justify-content: center; 
+        }
+        .card { 
+            background: white; 
+            padding: 25px; 
+            border-radius: 20px; 
+            box-shadow: 0 10px 25px rgba(0,0,0,0.08); 
+            width: 100%; 
+            max-width: 420px; 
+            border: 1px solid #e0e0e0; 
+        }
         h2 { text-align: center; color: #1a73e8; margin-top: 0; font-size: 22px; }
         label { display: block; margin: 15px 0 5px; font-weight: 600; color: #444; font-size: 14px; }
-        select, textarea, input, button { width: 100%; padding: 14px; margin-bottom: 10px; border: 1px solid #dcdcdc; border-radius: 12px; box-sizing: border-box; font-size: 16px; outline: none; transition: 0.2s; }
-        select:focus, textarea:focus, input:focus { border-color: #1a73e8; box-shadow: 0 0 0 3px rgba(26,115,232,0.1); }
+        
+        select, textarea, input, button { 
+            width: 100%; 
+            padding: 14px; 
+            margin-bottom: 10px; 
+            border: 1px solid #dcdcdc; 
+            border-radius: 12px; 
+            box-sizing: border-box; 
+            font-size: 16px; 
+            outline: none; 
+            transition: 0.2s; 
+        }
+        
+        select:focus, textarea:focus, input:focus { 
+            border-color: #1a73e8; 
+            box-shadow: 0 0 0 3px rgba(26,115,232,0.1); 
+        }
+        
         textarea { height: 140px; resize: none; line-height: 1.5; }
-        button { background: #1a73e8; color: white; border: none; cursor: pointer; font-weight: bold; margin-top: 10px; box-shadow: 0 4px 6px rgba(26,115,232,0.2); }
+        
+        button { 
+            background: #1a73e8; 
+            color: white; 
+            border: none; 
+            cursor: pointer; 
+            font-weight: bold; 
+            margin-top: 10px; 
+            box-shadow: 0 4px 6px rgba(26,115,232,0.2); 
+        }
+        
         button:hover { background: #1557b0; }
         button:active { transform: scale(0.97); }
-        button:disabled { background: #ccc; box-shadow: none; cursor: not-allowed; }
-        .status { padding: 15px; border-radius: 12px; display: none; margin-top: 15px; font-size: 14px; line-height: 1.4; border: 1px solid transparent; }
+        button:disabled { background: #ccc; cursor: not-allowed; }
+
+        .status { 
+            padding: 15px; 
+            border-radius: 12px; 
+            display: none; 
+            margin-top: 15px; 
+            font-size: 14px; 
+            line-height: 1.4; 
+            border: 1px solid transparent; 
+        }
         .success { background: #e6f4ea; color: #1e8e3e; border-color: #ceead6; }
         .error { background: #fce8e6; color: #d93025; border-color: #fad2cf; }
     </style>
@@ -29,17 +78,17 @@
     <label>🎯 Выберите проект:</label>
     <select id="tableSelect">
         <option value="https://script.google.com/macros/s/AKfycbyb2FrnNQl_HWKUAwFVt7-Yv_X7rERganxUHVC9JhAUHotdOKZuFEcQUymByraPyBe2mw/exec">Тестовая таблица</option>
-        <option value="https://script.google.com/macros/s/AKfycbzDOjIpIyatrsNDpbisFFNCVtYchgflY9CuCB5cNsQ1bpaNJDyhfS_hrfbAXrU_qmKg/exec">Березка</option>
+        <option value="https://script.google.com/macros/s/AKfycbyb2FrnNQl_HWKUAwFVt7-Yv_X7rERganxUHVC9JhAUHotdOKZuFEcQUymByraPyBe2mw/exec">Березка</option>
     </select>
 
-    <label>📊 Столбец для отметки (№):</label>
-    <input type="number" id="columnNum" placeholder="Куда ставим?" value="2">
+    <label>📊 Номер столбца:</label>
+    <input type="number" id="columnNum" placeholder="Куда ставим отметку?" value="2">
 
     <label>✍️ Что вписать?</label>
-    <input type="text" id="valueToSet" placeholder="Например: 1 или Да" value="1">
+    <input type="text" id="valueToSet" placeholder="Например: 1" value="1">
 
     <label>👥 Список имен (Имя Фамилия):</label>
-    <textarea id="namesInput" placeholder="Вставьте список из мессенджера..."></textarea>
+    <textarea id="namesInput" placeholder="Вставьте список из чата..."></textarea>
 
     <button id="sendBtn">ОБРАБОТАТЬ</button>
 
@@ -57,33 +106,37 @@
         const val = document.getElementById('valueToSet').value;
 
         if (!names.trim()) {
-            showStatus('⚠️ Вставьте хотя бы одно имя!', 'error');
+            showStatus('⚠️ Вставьте список имен!', 'error');
             return;
         }
 
         btn.disabled = true;
-        btn.innerText = '⏳ Соединение с Google...';
+        btn.innerText = '⏳ Синхронизация...';
         statusBox.style.display = 'none';
 
         try {
+            // Формируем запрос
             const finalUrl = `${scriptUrl}?searchName=${encodeURIComponent(names)}&col=${col}&val=${encodeURIComponent(val)}`;
             
-            // Используем режим no-cors не получится, нам нужен JSON, поэтому просто fetch
             const response = await fetch(finalUrl);
             const data = await response.json();
 
             if (data.updated !== undefined) {
-                let msg = `<b>Успех!</b> Добавлено отметок: <b>${data.updated}</b> из ${data.total}`;
+                let msg = `<b>Успех!</b> Отмечено: <b>${data.updated}</b> из ${data.total}`;
+                
                 if (data.missed && data.missed.length > 0) {
                     msg += `<br><br>⚠️ <b>Не найдены:</b><br>${data.missed.join('<br>')}`;
                 }
+                
                 showStatus(msg, 'success');
-                if(data.updated > 0) document.getElementById('namesInput').value = ''; // Очистить поле если всё ок
+                
+                // Очищаем поле ввода, если всё прошло успешно
+                if (data.updated > 0) document.getElementById('namesInput').value = '';
             } else {
-                showStatus('❌ Ошибка: Скрипт вернул пустой ответ.', 'error');
+                showStatus('❌ Ошибка: Скрипт вернул некорректный ответ.', 'error');
             }
         } catch (err) {
-            showStatus('❌ Ошибка сети. Убедитесь, что скрипт развернут как "Anyone" и интернет стабилен.', 'error');
+            showStatus('❌ Ошибка сети. Проверьте развертывание скрипта (Anyone) или VPN.', 'error');
             console.error(err);
         } finally {
             btn.disabled = false;
