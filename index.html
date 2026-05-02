@@ -88,6 +88,12 @@
             background: rgba(255, 255, 255, 0.06);
         }
 
+        /* Чёрный шрифт в выпадающем списке на ПК */
+        select option {
+            color: #000;
+            background: #fff;
+        }
+
         textarea { height: 120px; resize: none; }
 
         button {
@@ -159,6 +165,7 @@
             <option value="corp1">36 корпус 1</option>
             <option value="corp2">36 корпус 2</option>
             <option value="berezka">Березка</option>
+            <option value="elegant_tournaments">Турниры Элегант</option>
             <option value="test">Тест</option>
         </select>
     </div>
@@ -196,6 +203,7 @@
         corp1: "https://script.google.com/macros/s/AKfycbwM4fhmvJHJKpznXUeOZWUvYYzIm5QRNWNAoBopLLwDlATnXcuNjDPDnSlkzpoGa_XL/exec",
         corp2: "https://script.google.com/macros/s/AKfycbzcuVvdZYYPNykgJO77PUjdA_r5RiYa1Rw4TB3Nhh4tjIJFdm4eStmmcORob160Odzz/exec",
         berezka: "https://script.google.com/macros/s/AKfycbzDOjIpIyatrsNDpbisFFNCVtYchgflY9CuCB5cNsQ1bpaNJDyhfS_hrfbAXrU_qmKg/exec",
+        elegant_tournaments: "https://script.google.com/macros/s/AKfycbyG_tYIDweUnae_kgYLfBOzO0zjMjissAbCevR-A_Matyds3PECwIm7N3K3YUnV71uJEQ/exec",
         test: "https://script.google.com/macros/s/AKfycbyb2FrnNQl_HWKUAwFVt7-Yv_X7rERganxUHVC9JhAUHotdOKZuFEcQUymByraPyBe2mw/exec"
     };
 
@@ -221,8 +229,6 @@
         missedBox.style.display = 'none';
 
         try {
-            // Код скрипта уже поддерживает поиск по словам (words.every)
-            // Мы просто отправляем текст как есть.
             const finalUrl = `${macroUrl}?searchName=${encodeURIComponent(names)}&col=${encodeURIComponent(col)}&val=${encodeURIComponent(val)}`;
             
             const response = await fetch(finalUrl);
