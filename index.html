@@ -13,7 +13,6 @@
             --border: rgba(255, 255, 255, 0.08);
         }
 
-        /* Убираем синий отклик и выделение */
         * {
             -webkit-tap-highlight-color: transparent;
             outline: none !important;
@@ -91,7 +90,7 @@
         }
 
         textarea {
-            height: 100px;
+            height: 120px;
             resize: none;
         }
 
@@ -148,14 +147,17 @@
     <div class="field-group">
         <label>Объект</label>
         <select id="target">
+            <option value="gymnasium">Гимназия</option>
+            <option value="rainbow">Радуга</option>
+            <option value="creek">Ручеёк</option>
+            <option value="cheburashka">Чебурашка</option>
+            <option value="elegant">Элегант</option>
+            <option value="anchor">Якорёк</option>
+            <option value="corp1">36 корпус 1</option>
+            <option value="corp2">36 корпус 2</option>
             <option value="berezka">Березка</option>
             <option value="test">Тест</option>
         </select>
-    </div>
-
-    <div class="field-group">
-        <label>Лист</label>
-        <input type="text" id="sheetName" value="апр26">
     </div>
 
     <div style="display: flex; gap: 10px;">
@@ -171,7 +173,7 @@
 
     <div class="field-group">
         <label>Список</label>
-        <textarea id="names" placeholder="Имена..."></textarea>
+        <textarea id="names" placeholder="Вставь имена..."></textarea>
     </div>
 
     <button id="go">Запустить</button>
@@ -179,46 +181,47 @@
 </div>
 
 <script>
-    // Все данные теперь тут, в интерфейсе их нет
-    const DB = {
-        test: {
-            macro: "https://script.google.com/macros/s/AKfycbyb2FrnNQl_HWKUAwFVt7-Yv_X7rERganxUHVC9JhAUHotdOKZuFEcQUymByraPyBe2mw/exec",
-            url: "https://docs.google.com/spreadsheets/d/1sc4sODaPRRHnTU_S2KviTO9hGOpnHsEnhHvsgZfuKQM/edit"
-        },
-        berezka: {
-            macro: "https://script.google.com/macros/s/AKfycbzDOjIpIyatrsNDpbisFFNCVtYchgflY9CuCB5cNsQ1bpaNJDyhfS_hrfbAXrU_qmKg/exec",
-            url: "https://docs.google.com/spreadsheets/d/1e6uk3LObdup1tZmVYiUI35zrs_KvRjQkOo5o7mHmirM/edit"
-        }
+    // База ссылок макросов
+    const MACROS = {
+        gymnasium: "https://script.google.com/macros/s/AKfycbwk5cGmz-tr-JVF1XI0PIHG8S0Mp99DYWYdt-8Ks1PqG9NHY68Wx0V_aQLb8pTtWS29/exec",
+        rainbow: "https://script.google.com/macros/s/AKfycbzlG0mNL6ZpH_eqRLsqx2YfSFktMQdzKlDrbRkEj_J2s3-QDEIxYViKvtXm4f9YXydm/exec",
+        creek: "https://script.google.com/macros/s/AKfycbxSeqyOmk2ZsZ7y6rFsqGu69QubseSHK6HwwjiSa0h_ah41_SWEDc5c8IGCHUyT0fBepw/exec",
+        cheburashka: "https://script.google.com/macros/s/AKfycbzo_7FS8VbXYHlK0WBR_MePaO2f2WfgLAbWa88Ukk2x02ftlCTBk5YVkiReZuezYRR8/exec",
+        elegant: "https://script.google.com/macros/s/AKfycbx3VrUHM6xj-6-25FnN5N6IKpW6CcQ9msP5Wt2p49a0eTGO11OJOZp2JQEVyv1a4O1a5w/exec",
+        anchor: "https://script.google.com/macros/s/AKfycbyEbjA0YbAeEgaBLVKLvV3YgKzVkwDGbph93ApQCYm2IBbmZ0U_3d3hrYxPRJz2kYMUog/exec",
+        corp1: "https://script.google.com/macros/s/AKfycbwM4fhmvJHJKpznXUeOZWUvYYzIm5QRNWNAoBopLLwDlATnXcuNjDPDnSlkzpoGa_XL/exec",
+        corp2: "https://script.google.com/macros/s/AKfycbzcuVvdZYYPNykgJO77PUjdA_r5RiYa1Rw4TB3Nhh4tjIJFdm4eStmmcORob160Odzz/exec",
+        berezka: "https://script.google.com/macros/s/AKfycbzDOjIpIyatrsNDpbisFFNCVtYchgflY9CuCB5cNsQ1bpaNJDyhfS_hrfbAXrU_qmKg/exec",
+        test: "https://script.google.com/macros/s/AKfycbyb2FrnNQl_HWKUAwFVt7-Yv_X7rERganxUHVC9JhAUHotdOKZuFEcQUymByraPyBe2mw/exec"
     };
 
     const btn = document.getElementById('go');
     const status = document.getElementById('status');
 
     btn.onclick = async () => {
-        const config = DB[document.getElementById('target').value];
-        const month = document.getElementById('sheetName').value.trim();
+        const macroUrl = MACROS[document.getElementById('target').value];
         const names = document.getElementById('names').value;
         const col = document.getElementById('col').value.trim();
         const val = document.getElementById('val').value;
 
-        if (!names.trim() || !month) {
-            showStatus('Пустые поля!', 'error');
+        if (!names.trim()) {
+            showStatus('Вставь имена!', 'error');
             return;
         }
 
         btn.disabled = true;
-        btn.innerText = 'Связь...';
+        btn.innerText = 'Синхронизация...';
         status.style.display = 'none';
 
         try {
-            // Формируем запрос: макрос + ссылка на таблицу + название листа
-            const finalUrl = `${config.macro}?searchName=${encodeURIComponent(names)}&col=${encodeURIComponent(col)}&val=${encodeURIComponent(val)}&sheetUrl=${encodeURIComponent(config.url)}&month=${encodeURIComponent(month)}`;
+            // Запрос без параметра месяца, так как ссылки прямые
+            const finalUrl = `${macroUrl}?searchName=${encodeURIComponent(names)}&col=${encodeURIComponent(col)}&val=${encodeURIComponent(val)}`;
             
             const response = await fetch(finalUrl);
             const data = await response.json();
 
             if (data.updated !== undefined) {
-                showStatus(`Готово: ${data.updated}/${data.total}`, 'success');
+                showStatus(`Успех: ${data.updated}/${data.total}`, 'success');
                 if (data.updated > 0) document.getElementById('names').value = '';
             } else {
                 showStatus('Ошибка скрипта', 'error');
