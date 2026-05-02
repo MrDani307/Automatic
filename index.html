@@ -34,7 +34,7 @@
             display: flex;
             justify-content: center;
             align-items: center;
-            height: 100vh;
+            min-height: 100vh;
             background: radial-gradient(circle at top right, #1a1a1a, #050505);
         }
 
@@ -48,6 +48,7 @@
             max-width: 360px;
             border: 1px solid var(--border);
             box-shadow: 0 20px 40px rgba(0,0,0,0.4);
+            margin: 20px 0;
         }
 
         h2 {
@@ -60,9 +61,7 @@
             text-transform: uppercase;
         }
 
-        .field-group {
-            margin-bottom: 16px;
-        }
+        .field-group { margin-bottom: 16px; }
 
         label {
             display: block;
@@ -89,10 +88,7 @@
             background: rgba(255, 255, 255, 0.06);
         }
 
-        textarea {
-            height: 120px;
-            resize: none;
-        }
+        textarea { height: 120px; resize: none; }
 
         button {
             width: 100%;
@@ -110,15 +106,8 @@
             transition: transform 0.1s, opacity 0.2s;
         }
 
-        button:active {
-            transform: scale(0.96);
-            opacity: 0.8;
-        }
-
-        button:disabled {
-            background: #222;
-            color: #444;
-        }
+        button:active { transform: scale(0.96); opacity: 0.8; }
+        button:disabled { background: #222; color: #444; }
 
         .status {
             margin-top: 20px;
@@ -128,6 +117,18 @@
             border-radius: 14px;
             display: none;
             animation: slideUp 0.3s ease;
+        }
+
+        .missed-list {
+            margin-top: 10px;
+            font-size: 11px;
+            color: #ff8a80;
+            text-align: left;
+            background: rgba(213, 0, 0, 0.05);
+            padding: 10px;
+            border-radius: 10px;
+            border: 1px solid rgba(255, 138, 128, 0.2);
+            display: none;
         }
 
         @keyframes slideUp {
@@ -177,11 +178,12 @@
     </div>
 
     <button id="go">Запустить</button>
+    
     <div id="status" class="status"></div>
+    <div id="missedBox" class="missed-list"></div>
 </div>
 
 <script>
-    // База ссылок макросов
     const MACROS = {
         gymnasium: "https://script.google.com/macros/s/AKfycbwk5cGmz-tr-JVF1XI0PIHG8S0Mp99DYWYdt-8Ks1PqG9NHY68Wx0V_aQLb8pTtWS29/exec",
         rainbow: "https://script.google.com/macros/s/AKfycbzlG0mNL6ZpH_eqRLsqx2YfSFktMQdzKlDrbRkEj_J2s3-QDEIxYViKvtXm4f9YXydm/exec",
@@ -197,10 +199,12 @@
 
     const btn = document.getElementById('go');
     const status = document.getElementById('status');
+    const missedBox = document.getElementById('missedBox');
 
     btn.onclick = async () => {
         const macroUrl = MACROS[document.getElementById('target').value];
-        const names = document.getElementById('names').value;
+        const namesInput = document.getElementById('names');
+        const names = namesInput.value;
         const col = document.getElementById('col').value.trim();
         const val = document.getElementById('val').value;
 
@@ -210,24 +214,33 @@
         }
 
         btn.disabled = true;
-        btn.innerText = 'Синхронизация...';
+        btn.innerText = 'Поиск...';
         status.style.display = 'none';
+        missedBox.style.display = 'none';
 
         try {
-            // Запрос без параметра месяца, так как ссылки прямые
             const finalUrl = `${macroUrl}?searchName=${encodeURIComponent(names)}&col=${encodeURIComponent(col)}&val=${encodeURIComponent(val)}`;
-            
             const response = await fetch(finalUrl);
             const data = await response.json();
 
             if (data.updated !== undefined) {
-                showStatus(`Успех: ${data.updated}/${data.total}`, 'success');
-                if (data.updated > 0) document.getElementById('names').value = '';
+                showStatus(`Найдено: ${data.updated} из ${data.total}`, 'success');
+                
+                // Если есть ненайденные имена
+                if (data.missed && data.missed.length > 0) {
+                    missedBox.innerHTML = `<strong>Не найдены:</strong><br>${data.missed.join('<br>')}`;
+                    missedBox.style.display = 'block';
+                }
+
+                // Очищаем поле ввода только если все найдены
+                if (data.updated === data.total) {
+                    namesInput.value = '';
+                }
             } else {
                 showStatus('Ошибка скрипта', 'error');
             }
         } catch (err) {
-            showStatus('Сеть или VPN', 'error');
+            showStatus('Ошибка сети / VPN', 'error');
         } finally {
             btn.disabled = false;
             btn.innerText = 'Запустить';
