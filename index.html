@@ -129,6 +129,8 @@
             border-radius: 10px;
             border: 1px solid rgba(255, 138, 128, 0.2);
             display: none;
+            max-height: 150px;
+            overflow-y: auto;
         }
 
         @keyframes slideUp {
@@ -173,8 +175,8 @@
     </div>
 
     <div class="field-group">
-        <label>Список</label>
-        <textarea id="names" placeholder="Вставь имена..."></textarea>
+        <label>Список (Фамилия Имя)</label>
+        <textarea id="names" placeholder="Иванов Иван&#10;Петров Петр..."></textarea>
     </div>
 
     <button id="go">Запустить</button>
@@ -214,33 +216,34 @@
         }
 
         btn.disabled = true;
-        btn.innerText = 'Поиск...';
+        btn.innerText = 'Синхронизация...';
         status.style.display = 'none';
         missedBox.style.display = 'none';
 
         try {
+            // Код скрипта уже поддерживает поиск по словам (words.every)
+            // Мы просто отправляем текст как есть.
             const finalUrl = `${macroUrl}?searchName=${encodeURIComponent(names)}&col=${encodeURIComponent(col)}&val=${encodeURIComponent(val)}`;
+            
             const response = await fetch(finalUrl);
             const data = await response.json();
 
             if (data.updated !== undefined) {
-                showStatus(`Найдено: ${data.updated} из ${data.total}`, 'success');
+                showStatus(`Успех: ${data.updated} / ${data.total}`, 'success');
                 
-                // Если есть ненайденные имена
                 if (data.missed && data.missed.length > 0) {
                     missedBox.innerHTML = `<strong>Не найдены:</strong><br>${data.missed.join('<br>')}`;
                     missedBox.style.display = 'block';
                 }
 
-                // Очищаем поле ввода только если все найдены
                 if (data.updated === data.total) {
                     namesInput.value = '';
                 }
             } else {
-                showStatus('Ошибка скрипта', 'error');
+                showStatus('Ошибка ответа', 'error');
             }
         } catch (err) {
-            showStatus('Ошибка сети / VPN', 'error');
+            showStatus('Ошибка (проверь VPN)', 'error');
         } finally {
             btn.disabled = false;
             btn.innerText = 'Запустить';
