@@ -45,7 +45,7 @@
             padding: 30px;
             border-radius: 28px;
             width: 90%;
-            max-width: 360px;
+            max-width: 380px;
             border: 1px solid var(--border);
             box-shadow: 0 20px 40px rgba(0,0,0,0.4);
             margin: 20px 0;
@@ -95,7 +95,51 @@
 
         textarea { height: 120px; resize: none; }
 
-        /* Переключатель режима */
+        .targets-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+            margin-bottom: 16px;
+        }
+
+        .target-chip {
+            padding: 10px 12px;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            color: #666;
+            font-size: 12px;
+            font-weight: 500;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            -webkit-user-select: none;
+            user-select: none;
+        }
+
+        .target-chip.selected {
+            background: rgba(187, 134, 252, 0.15);
+            border-color: var(--accent);
+            color: var(--accent);
+        }
+
+        .select-all-btn {
+            width: 100%;
+            padding: 9px;
+            background: transparent;
+            border: 1px dashed var(--border);
+            border-radius: 12px;
+            color: #555;
+            font-size: 11px;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            cursor: pointer;
+            margin-bottom: 16px;
+            transition: all 0.2s;
+        }
+
+        .select-all-btn:active { color: var(--accent); border-color: var(--accent); }
+
         .mode-toggle {
             display: flex;
             background: rgba(255,255,255,0.03);
@@ -126,10 +170,7 @@
             color: #000;
         }
 
-        .mode-toggle button:active {
-            transform: none;
-            opacity: 1;
-        }
+        .mode-toggle button:active { transform: none; opacity: 1; }
 
         button#go {
             width: 100%;
@@ -160,18 +201,47 @@
             animation: slideUp 0.3s ease;
         }
 
-        .missed-list {
+        .results-box {
             margin-top: 10px;
-            font-size: 11px;
-            color: #ff8a80;
-            text-align: left;
-            background: rgba(213, 0, 0, 0.05);
-            padding: 10px;
-            border-radius: 10px;
-            border: 1px solid rgba(255, 138, 128, 0.2);
             display: none;
-            max-height: 150px;
-            overflow-y: auto;
+        }
+
+        .result-item {
+            font-size: 11px;
+            padding: 10px 12px;
+            border-radius: 10px;
+            margin-bottom: 6px;
+            animation: slideUp 0.3s ease;
+        }
+
+        .result-item.success {
+            color: #b9f6ca;
+            background: rgba(0, 200, 83, 0.08);
+            border: 1px solid rgba(0, 200, 83, 0.15);
+        }
+
+        .result-item.partial {
+            color: #ffe082;
+            background: rgba(255, 193, 7, 0.08);
+            border: 1px solid rgba(255, 193, 7, 0.15);
+        }
+
+        .result-item.error {
+            color: #ff8a80;
+            background: rgba(213, 0, 0, 0.08);
+            border: 1px solid rgba(255, 138, 128, 0.2);
+        }
+
+        .result-item .obj-name {
+            font-weight: 700;
+            font-size: 12px;
+            margin-bottom: 3px;
+        }
+
+        .result-item .missed-names {
+            margin-top: 4px;
+            opacity: 0.8;
+            line-height: 1.6;
         }
 
         .hint {
@@ -195,30 +265,17 @@
     <h2>COMMAND</h2>
 
     <div class="field-group">
-        <label>Объект</label>
-        <select id="target">
-            <option value="gymnasium">Гимназия</option>
-            <option value="rainbow">Радуга</option>
-            <option value="creek">Ручеёк</option>
-            <option value="cheburashka">Чебурашка</option>
-            <option value="elegant">Элегант</option>
-            <option value="anchor">Якорёк</option>
-            <option value="corp1">36 корпус 1</option>
-            <option value="corp2">36 корпус 2</option>
-            <option value="berezka">Березка</option>
-            <option value="elegant_tournaments">Турниры Элегант</option>
-            <option value="test">Тест</option>
-        </select>
+        <label>Объекты</label>
+        <div class="targets-grid" id="targetsGrid"></div>
+        <button class="select-all-btn" onclick="toggleAll()">Выбрать все / Снять</button>
     </div>
 
-    <!-- Переключатель режима -->
     <label style="margin-bottom:8px;">Режим поиска столбца</label>
     <div class="mode-toggle">
         <button id="modeCol" class="active" onclick="setMode('col')">По столбцу</button>
         <button id="modeNum" onclick="setMode('num')">По числу</button>
     </div>
 
-    <!-- Режим: столбец -->
     <div id="blockCol" style="display: flex; gap: 10px;">
         <div class="field-group" style="flex: 1;">
             <label>Столбец</label>
@@ -230,7 +287,6 @@
         </div>
     </div>
 
-    <!-- Режим: по числу -->
     <div id="blockNum" style="display: none;">
         <div style="display: flex; gap: 10px;">
             <div class="field-group" style="flex: 1;">
@@ -251,25 +307,46 @@
     </div>
 
     <button id="go">Запустить</button>
-    
+
     <div id="status" class="status"></div>
-    <div id="missedBox" class="missed-list"></div>
+    <div id="resultsBox" class="results-box"></div>
 </div>
 
 <script>
     const MACROS = {
-        gymnasium: "https://script.google.com/macros/s/AKfycbwk5cGmz-tr-JVF1XI0PIHG8S0Mp99DYWYdt-8Ks1PqG9NHY68Wx0V_aQLb8pTtWS29/exec",
-        rainbow: "https://script.google.com/macros/s/AKfycbzlG0mNL6ZpH_eqRLsqx2YfSFktMQdzKlDrbRkEj_J2s3-QDEIxYViKvtXm4f9YXydm/exec",
-        creek: "https://script.google.com/macros/s/AKfycbxSeqyOmk2ZsZ7y6rFsqGu69QubseSHK6HwwjiSa0h_ah41_SWEDc5c8IGCHUyT0fBepw/exec",
-        cheburashka: "https://script.google.com/macros/s/AKfycbzo_7FS8VbXYHlK0WBR_MePaO2f2WfgLAbWa88Ukk2x02ftlCTBk5YVkiReZuezYRR8/exec",
-        elegant: "https://script.google.com/macros/s/AKfycbx3VrUHM6xj-6-25FnN5N6IKpW6CcQ9msP5Wt2p49a0eTGO11OJOZp2JQEVyv1a4O1a5w/exec",
-        anchor: "https://script.google.com/macros/s/AKfycbyEbjA0YbAeEgaBLVKLvV3YgKzVkwDGbph93ApQCYm2IBbmZ0U_3d3hrYxPRJz2kYMUog/exec",
-        corp1: "https://script.google.com/macros/s/AKfycbwM4fhmvJHJKpznXUeOZWUvYYzIm5QRNWNAoBopLLwDlATnXcuNjDPDnSlkzpoGa_XL/exec",
-        corp2: "https://script.google.com/macros/s/AKfycbzcuVvdZYYPNykgJO77PUjdA_r5RiYa1Rw4TB3Nhh4tjIJFdm4eStmmcORob160Odzz/exec",
-        berezka: "https://script.google.com/macros/s/AKfycbzDOjIpIyatrsNDpbisFFNCVtYchgflY9CuCB5cNsQ1bpaNJDyhfS_hrfbAXrU_qmKg/exec",
-        elegant_tournaments: "https://script.google.com/macros/s/AKfycbyG_tYIDweUnae_kgYLfBOzO0zjMjissAbCevR-A_Matyds3PECwIm7N3K3YUnV71uJEQ/exec",
-        test: "https://script.google.com/macros/s/AKfycbyb2FrnNQl_HWKUAwFVt7-Yv_X7rERganxUHVC9JhAUHotdOKZuFEcQUymByraPyBe2mw/exec"
+        gymnasium:           { label: "Гимназия",        url: "https://script.google.com/macros/s/AKfycbwk5cGmz-tr-JVF1XI0PIHG8S0Mp99DYWYdt-8Ks1PqG9NHY68Wx0V_aQLb8pTtWS29/exec" },
+        rainbow:             { label: "Радуга",           url: "https://script.google.com/macros/s/AKfycbzlG0mNL6ZpH_eqRLsqx2YfSFktMQdzKlDrbRkEj_J2s3-QDEIxYViKvtXm4f9YXydm/exec" },
+        creek:               { label: "Ручеёк",           url: "https://script.google.com/macros/s/AKfycbxSeqyOmk2ZsZ7y6rFsqGu69QubseSHK6HwwjiSa0h_ah41_SWEDc5c8IGCHUyT0fBepw/exec" },
+        cheburashka:         { label: "Чебурашка",        url: "https://script.google.com/macros/s/AKfycbzo_7FS8VbXYHlK0WBR_MePaO2f2WfgLAbWa88Ukk2x02ftlCTBk5YVkiReZuezYRR8/exec" },
+        elegant:             { label: "Элегант",          url: "https://script.google.com/macros/s/AKfycbx3VrUHM6xj-6-25FnN5N6IKpW6CcQ9msP5Wt2p49a0eTGO11OJOZp2JQEVyv1a4O1a5w/exec" },
+        anchor:              { label: "Якорёк",           url: "https://script.google.com/macros/s/AKfycbyEbjA0YbAeEgaBLVKLvV3YgKzVkwDGbph93ApQCYm2IBbmZ0U_3d3hrYxPRJz2kYMUog/exec" },
+        corp1:               { label: "36 корпус 1",      url: "https://script.google.com/macros/s/AKfycbwM4fhmvJHJKpznXUeOZWUvYYzIm5QRNWNAoBopLLwDlATnXcuNjDPDnSlkzpoGa_XL/exec" },
+        corp2:               { label: "36 корпус 2",      url: "https://script.google.com/macros/s/AKfycbzcuVvdZYYPNykgJO77PUjdA_r5RiYa1Rw4TB3Nhh4tjIJFdm4eStmmcORob160Odzz/exec" },
+        berezka:             { label: "Березка",          url: "https://script.google.com/macros/s/AKfycbzDOjIpIyatrsNDpbisFFNCVtYchgflY9CuCB5cNsQ1bpaNJDyhfS_hrfbAXrU_qmKg/exec" },
+        elegant_tournaments: { label: "Турниры Элегант", url: "https://script.google.com/macros/s/AKfycbyG_tYIDweUnae_kgYLfBOzO0zjMjissAbCevR-A_Matyds3PECwIm7N3K3YUnV71uJEQ/exec" },
+        test:                { label: "Тест",             url: "https://script.google.com/macros/s/AKfycbyb2FrnNQl_HWKUAwFVt7-Yv_X7rERganxUHVC9JhAUHotdOKZuFEcQUymByraPyBe2mw/exec" }
     };
+
+    // Рендер чипов
+    const grid = document.getElementById('targetsGrid');
+    Object.entries(MACROS).forEach(([key, obj]) => {
+        const chip = document.createElement('div');
+        chip.className = 'target-chip';
+        chip.textContent = obj.label;
+        chip.dataset.key = key;
+        chip.onclick = () => chip.classList.toggle('selected');
+        grid.appendChild(chip);
+    });
+
+    function toggleAll() {
+        const chips = document.querySelectorAll('.target-chip');
+        const allSelected = [...chips].every(c => c.classList.contains('selected'));
+        chips.forEach(c => allSelected ? c.classList.remove('selected') : c.classList.add('selected'));
+    }
+
+    function getSelected() {
+        return [...document.querySelectorAll('.target-chip.selected')].map(c => c.dataset.key);
+    }
 
     let currentMode = 'col';
 
@@ -281,114 +358,121 @@
         document.getElementById('modeNum').classList.toggle('active', mode === 'num');
     }
 
-    // Перевод номера столбца в букву (1=A, 6=F ...)
-    function columnToLetter(col) {
-        let letter = '';
-        while (col > 0) {
-            let rem = (col - 1) % 26;
-            letter = String.fromCharCode(65 + rem) + letter;
-            col = Math.floor((col - 1) / 26);
-        }
-        return letter;
-    }
-
     const btn = document.getElementById('go');
-    const status = document.getElementById('status');
-    const missedBox = document.getElementById('missedBox');
+    const statusEl = document.getElementById('status');
+    const resultsBox = document.getElementById('resultsBox');
 
     btn.onclick = async () => {
-        const macroUrl = MACROS[document.getElementById('target').value];
+        const selected = getSelected();
+        if (selected.length === 0) { showStatus('Выбери хотя бы один объект!', 'error'); return; }
+
         const namesInput = document.getElementById('names');
         const names = namesInput.value;
+        if (!names.trim()) { showStatus('Вставь имена!', 'error'); return; }
 
-        if (!names.trim()) {
-            showStatus('Вставь имена!', 'error');
+        const val = currentMode === 'col'
+            ? document.getElementById('val').value
+            : document.getElementById('val2').value;
+
+        const colFixed = currentMode === 'col'
+            ? document.getElementById('col').value.trim()
+            : null;
+
+        const headerNum = currentMode === 'num'
+            ? parseInt(document.getElementById('headerNum').value)
+            : null;
+
+        if (currentMode === 'num' && (!headerNum || headerNum < 1)) {
+            showStatus('Введи число для поиска!', 'error');
             return;
         }
 
-        let col, val;
-
-        if (currentMode === 'col') {
-            col = document.getElementById('col').value.trim();
-            val = document.getElementById('val').value;
-        } else {
-            // Режим поиска по числу в шапке
-            const headerNum = parseInt(document.getElementById('headerNum').value);
-            val = document.getElementById('val2').value;
-
-            if (!headerNum || headerNum < 1) {
-                showStatus('Введи число для поиска!', 'error');
-                return;
-            }
-
-            // Запрашиваем шапку таблицы через отдельный запрос
-            btn.disabled = true;
-            btn.innerText = 'Ищу столбец...';
-
-            try {
-                // Передаём специальный параметр findCol — скрипт вернёт номер столбца
-                const findUrl = `${macroUrl}?findCol=${encodeURIComponent(headerNum)}`;
-                const findResp = await fetch(findUrl);
-                const findData = await findResp.json();
-
-                if (findData.colLetter) {
-                    col = findData.colLetter;
-                    showStatus(`Столбец найден: ${col}`, 'success');
-                } else if (findData.error) {
-                    showStatus('Ошибка поиска столбца: ' + findData.error, 'error');
-                    btn.disabled = false;
-                    btn.innerText = 'Запустить';
-                    return;
-                } else {
-                    showStatus(`Число ${headerNum} не найдено в шапке (столбцы F+)`, 'error');
-                    btn.disabled = false;
-                    btn.innerText = 'Запустить';
-                    return;
-                }
-            } catch (e) {
-                showStatus('Ошибка (проверь VPN)', 'error');
-                btn.disabled = false;
-                btn.innerText = 'Запустить';
-                return;
-            }
-        }
-
         btn.disabled = true;
-        btn.innerText = 'Синхронизация...';
-        status.style.display = 'none';
-        missedBox.style.display = 'none';
+        btn.innerText = `Отправляю (0/${selected.length})...`;
+        statusEl.style.display = 'none';
+        resultsBox.style.display = 'none';
+        resultsBox.innerHTML = '';
 
-        try {
-            const finalUrl = `${macroUrl}?searchName=${encodeURIComponent(names)}&col=${encodeURIComponent(col)}&val=${encodeURIComponent(val)}`;
-            const response = await fetch(finalUrl);
-            const data = await response.json();
+        let done = 0;
 
-            if (data.updated !== undefined) {
-                showStatus(`Успех: ${data.updated} / ${data.total} (столбец ${col})`, 'success');
+        // Каждый объект обрабатывается независимо
+        const promises = selected.map(async (key) => {
+            const macroUrl = MACROS[key].url;
+            const label = MACROS[key].label;
+            try {
+                let colToUse = colFixed;
 
-                if (data.missed && data.missed.length > 0) {
-                    missedBox.innerHTML = `<strong>Не найдены:</strong><br>${data.missed.join('<br>')}`;
-                    missedBox.style.display = 'block';
+                // Режим по числу — каждая таблица ищет свой столбец сама
+                if (currentMode === 'num') {
+                    const findUrl = `${macroUrl}?findCol=${encodeURIComponent(headerNum)}`;
+                    const findResp = await fetch(findUrl);
+                    const findData = await findResp.json();
+
+                    if (findData.colLetter) {
+                        colToUse = findData.colLetter;
+                    } else {
+                        done++;
+                        btn.innerText = `Отправляю (${done}/${selected.length})...`;
+                        return { label, key, colNotFound: true };
+                    }
                 }
 
-                if (data.updated === data.total) {
-                    namesInput.value = '';
-                }
-            } else {
-                showStatus('Ошибка ответа', 'error');
+                const finalUrl = `${macroUrl}?searchName=${encodeURIComponent(names)}&col=${encodeURIComponent(colToUse)}&val=${encodeURIComponent(val)}`;
+                const resp = await fetch(finalUrl);
+                const data = await resp.json();
+                done++;
+                btn.innerText = `Отправляю (${done}/${selected.length})...`;
+                return { label, key, colToUse, data };
+            } catch (err) {
+                done++;
+                btn.innerText = `Отправляю (${done}/${selected.length})...`;
+                return { label, key, error: err.toString() };
             }
-        } catch (err) {
-            showStatus('Ошибка (проверь VPN)', 'error');
-        } finally {
-            btn.disabled = false;
-            btn.innerText = 'Запустить';
+        });
+
+        const results = await Promise.all(promises);
+
+        // Рендер результатов
+        resultsBox.style.display = 'block';
+
+        results.forEach(({ label, colToUse, data, error, colNotFound }) => {
+            const item = document.createElement('div');
+            item.className = 'result-item';
+
+            if (colNotFound) {
+                item.classList.add('error');
+                item.innerHTML = `<div class="obj-name">❌ ${label}</div>Число не найдено в шапке`;
+            } else if (error || (data && data.error)) {
+                item.classList.add('error');
+                item.innerHTML = `<div class="obj-name">❌ ${label}</div>Ошибка связи`;
+            } else if (data.updated === data.total) {
+                const colInfo = colToUse ? ` (столбец ${colToUse})` : '';
+                item.classList.add('success');
+                item.innerHTML = `<div class="obj-name">✅ ${label}</div>Найдено: ${data.updated} / ${data.total}${colInfo}`;
+            } else {
+                const colInfo = colToUse ? ` (столбец ${colToUse})` : '';
+                const missedHtml = data.missed && data.missed.length > 0
+                    ? `<div class="missed-names">Не найдены: ${data.missed.join(', ')}</div>` : '';
+                item.classList.add('partial');
+                item.innerHTML = `<div class="obj-name">⚠️ ${label}</div>Найдено: ${data.updated} / ${data.total}${colInfo}${missedHtml}`;
+            }
+
+            resultsBox.appendChild(item);
+        });
+
+        btn.disabled = false;
+        btn.innerText = 'Запустить';
+
+        // Очищаем поле только если все успешно
+        if (results.every(r => !r.error && !r.colNotFound && !r.data?.error && r.data?.updated === r.data?.total)) {
+            namesInput.value = '';
         }
     };
 
     function showStatus(text, type) {
-        status.innerText = text;
-        status.className = 'status ' + type;
-        status.style.display = 'block';
+        statusEl.innerText = text;
+        statusEl.className = 'status ' + type;
+        statusEl.style.display = 'block';
     }
 </script>
 
