@@ -88,7 +88,6 @@
             background: rgba(255, 255, 255, 0.06);
         }
 
-        /* Чёрный шрифт в выпадающем списке на ПК */
         select option {
             color: #000;
             background: #fff;
@@ -96,7 +95,43 @@
 
         textarea { height: 120px; resize: none; }
 
-        button {
+        /* Переключатель режима */
+        .mode-toggle {
+            display: flex;
+            background: rgba(255,255,255,0.03);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            overflow: hidden;
+            margin-bottom: 16px;
+        }
+
+        .mode-toggle button {
+            flex: 1;
+            padding: 12px;
+            background: transparent;
+            color: #666;
+            border: none;
+            border-radius: 0;
+            margin: 0;
+            font-size: 12px;
+            font-weight: 600;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .mode-toggle button.active {
+            background: var(--accent);
+            color: #000;
+        }
+
+        .mode-toggle button:active {
+            transform: none;
+            opacity: 1;
+        }
+
+        button#go {
             width: 100%;
             padding: 16px;
             background: var(--accent);
@@ -112,8 +147,8 @@
             transition: transform 0.1s, opacity 0.2s;
         }
 
-        button:active { transform: scale(0.96); opacity: 0.8; }
-        button:disabled { background: #222; color: #444; }
+        button#go:active { transform: scale(0.96); opacity: 0.8; }
+        button#go:disabled { background: #222; color: #444; }
 
         .status {
             margin-top: 20px;
@@ -137,6 +172,12 @@
             display: none;
             max-height: 150px;
             overflow-y: auto;
+        }
+
+        .hint {
+            font-size: 10px;
+            color: #555;
+            margin: 4px 0 0 6px;
         }
 
         @keyframes slideUp {
@@ -170,7 +211,15 @@
         </select>
     </div>
 
-    <div style="display: flex; gap: 10px;">
+    <!-- Переключатель режима -->
+    <label style="margin-bottom:8px;">Режим поиска столбца</label>
+    <div class="mode-toggle">
+        <button id="modeCol" class="active" onclick="setMode('col')">По столбцу</button>
+        <button id="modeNum" onclick="setMode('num')">По числу</button>
+    </div>
+
+    <!-- Режим: столбец -->
+    <div id="blockCol" style="display: flex; gap: 10px;">
         <div class="field-group" style="flex: 1;">
             <label>Столбец</label>
             <input type="text" id="col" value="B">
@@ -178,6 +227,21 @@
         <div class="field-group" style="flex: 1;">
             <label>Символ</label>
             <input type="text" id="val" value="1">
+        </div>
+    </div>
+
+    <!-- Режим: по числу -->
+    <div id="blockNum" style="display: none;">
+        <div style="display: flex; gap: 10px;">
+            <div class="field-group" style="flex: 1;">
+                <label>Число в шапке</label>
+                <input type="number" id="headerNum" value="1" min="1">
+                <div class="hint">Ищет с столбца F (пропускает A–E)</div>
+            </div>
+            <div class="field-group" style="flex: 1;">
+                <label>Символ</label>
+                <input type="text" id="val2" value="1">
+            </div>
         </div>
     </div>
 
@@ -207,6 +271,27 @@
         test: "https://script.google.com/macros/s/AKfycbyb2FrnNQl_HWKUAwFVt7-Yv_X7rERganxUHVC9JhAUHotdOKZuFEcQUymByraPyBe2mw/exec"
     };
 
+    let currentMode = 'col';
+
+    function setMode(mode) {
+        currentMode = mode;
+        document.getElementById('blockCol').style.display = mode === 'col' ? 'flex' : 'none';
+        document.getElementById('blockNum').style.display = mode === 'num' ? 'block' : 'none';
+        document.getElementById('modeCol').classList.toggle('active', mode === 'col');
+        document.getElementById('modeNum').classList.toggle('active', mode === 'num');
+    }
+
+    // Перевод номера столбца в букву (1=A, 6=F ...)
+    function columnToLetter(col) {
+        let letter = '';
+        while (col > 0) {
+            let rem = (col - 1) % 26;
+            letter = String.fromCharCode(65 + rem) + letter;
+            col = Math.floor((col - 1) / 26);
+        }
+        return letter;
+    }
+
     const btn = document.getElementById('go');
     const status = document.getElementById('status');
     const missedBox = document.getElementById('missedBox');
@@ -215,12 +300,57 @@
         const macroUrl = MACROS[document.getElementById('target').value];
         const namesInput = document.getElementById('names');
         const names = namesInput.value;
-        const col = document.getElementById('col').value.trim();
-        const val = document.getElementById('val').value;
 
         if (!names.trim()) {
             showStatus('Вставь имена!', 'error');
             return;
+        }
+
+        let col, val;
+
+        if (currentMode === 'col') {
+            col = document.getElementById('col').value.trim();
+            val = document.getElementById('val').value;
+        } else {
+            // Режим поиска по числу в шапке
+            const headerNum = parseInt(document.getElementById('headerNum').value);
+            val = document.getElementById('val2').value;
+
+            if (!headerNum || headerNum < 1) {
+                showStatus('Введи число для поиска!', 'error');
+                return;
+            }
+
+            // Запрашиваем шапку таблицы через отдельный запрос
+            btn.disabled = true;
+            btn.innerText = 'Ищу столбец...';
+
+            try {
+                // Передаём специальный параметр findCol — скрипт вернёт номер столбца
+                const findUrl = `${macroUrl}?findCol=${encodeURIComponent(headerNum)}`;
+                const findResp = await fetch(findUrl);
+                const findData = await findResp.json();
+
+                if (findData.colLetter) {
+                    col = findData.colLetter;
+                    showStatus(`Столбец найден: ${col}`, 'success');
+                } else if (findData.error) {
+                    showStatus('Ошибка поиска столбца: ' + findData.error, 'error');
+                    btn.disabled = false;
+                    btn.innerText = 'Запустить';
+                    return;
+                } else {
+                    showStatus(`Число ${headerNum} не найдено в шапке (столбцы F+)`, 'error');
+                    btn.disabled = false;
+                    btn.innerText = 'Запустить';
+                    return;
+                }
+            } catch (e) {
+                showStatus('Ошибка (проверь VPN)', 'error');
+                btn.disabled = false;
+                btn.innerText = 'Запустить';
+                return;
+            }
         }
 
         btn.disabled = true;
@@ -230,13 +360,12 @@
 
         try {
             const finalUrl = `${macroUrl}?searchName=${encodeURIComponent(names)}&col=${encodeURIComponent(col)}&val=${encodeURIComponent(val)}`;
-            
             const response = await fetch(finalUrl);
             const data = await response.json();
 
             if (data.updated !== undefined) {
-                showStatus(`Успех: ${data.updated} / ${data.total}`, 'success');
-                
+                showStatus(`Успех: ${data.updated} / ${data.total} (столбец ${col})`, 'success');
+
                 if (data.missed && data.missed.length > 0) {
                     missedBox.innerHTML = `<strong>Не найдены:</strong><br>${data.missed.join('<br>')}`;
                     missedBox.style.display = 'block';
