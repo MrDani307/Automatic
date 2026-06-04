@@ -467,6 +467,18 @@
 
         await Promise.all(promises);
 
+        // Сортируем по количеству найденных (больше = выше)
+        const items = [...resultsBox.querySelectorAll('.result-item')];
+        items.sort((a, b) => {
+            const getCount = (el) => {
+                const text = el.querySelector('.obj-name')?.nextSibling?.textContent || el.innerHTML;
+                const match = text.match(/(\d+)\s*\/\s*\d+/);
+                return match ? parseInt(match[1]) : -1;
+            };
+            return getCount(b) - getCount(a);
+        });
+        items.forEach(item => resultsBox.appendChild(item));
+
         btn.disabled = false;
         btn.innerText = 'Запустить';
 
