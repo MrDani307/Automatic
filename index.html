@@ -212,6 +212,13 @@
             border-radius: 10px;
             margin-bottom: 6px;
             animation: slideUp 0.3s ease;
+            transition: all 0.3s ease;
+        }
+
+        .result-item.loading {
+            color: #666;
+            background: rgba(255,255,255,0.03);
+            border: 1px solid rgba(255,255,255,0.08);
         }
 
         .result-item.success {
@@ -327,7 +334,6 @@
         test:                { label: "Тест",             url: "https://script.google.com/macros/s/AKfycbyb2FrnNQl_HWKUAwFVt7-Yv_X7rERganxUHVC9JhAUHotdOKZuFEcQUymByraPyBe2mw/exec" }
     };
 
-    // Рендер чипов
     const grid = document.getElementById('targetsGrid');
     Object.entries(MACROS).forEach(([key, obj]) => {
         const chip = document.createElement('div');
@@ -390,19 +396,25 @@
         btn.disabled = true;
         btn.innerText = `Отправляю (0/${selected.length})...`;
         statusEl.style.display = 'none';
-        resultsBox.style.display = 'none';
+        resultsBox.style.display = 'block';
         resultsBox.innerHTML = '';
 
         let done = 0;
+        let allSuccess = true;
 
-        // Каждый объект обрабатывается независимо
         const promises = selected.map(async (key) => {
             const macroUrl = MACROS[key].url;
             const label = MACROS[key].label;
+
+            // Сразу показываем плейсхолдер
+            const item = document.createElement('div');
+            item.className = 'result-item loading';
+            item.innerHTML = `<div class="obj-name">⏳ ${label}</div>Отправляю...`;
+            resultsBox.appendChild(item);
+
             try {
                 let colToUse = colFixed;
 
-                // Режим по числу — каждая таблица ищет свой столбец сама
                 if (currentMode === 'num') {
                     const findUrl = `${macroUrl}?findCol=${encodeURIComponent(headerNum)}`;
                     const findResp = await fetch(findUrl);
@@ -413,60 +425,52 @@
                     } else {
                         done++;
                         btn.innerText = `Отправляю (${done}/${selected.length})...`;
-                        return { label, key, colNotFound: true };
+                        allSuccess = false;
+                        item.className = 'result-item error';
+                        item.innerHTML = `<div class="obj-name">❌ ${label}</div>Число не найдено в шапке`;
+                        return;
                     }
                 }
 
                 const finalUrl = `${macroUrl}?searchName=${encodeURIComponent(names)}&col=${encodeURIComponent(colToUse)}&val=${encodeURIComponent(val)}`;
                 const resp = await fetch(finalUrl);
                 const data = await resp.json();
+
                 done++;
                 btn.innerText = `Отправляю (${done}/${selected.length})...`;
-                return { label, key, colToUse, data };
+
+                const colInfo = colToUse ? ` (столбец ${colToUse})` : '';
+
+                if (data.error) {
+                    allSuccess = false;
+                    item.className = 'result-item error';
+                    item.innerHTML = `<div class="obj-name">❌ ${label}</div>Ошибка: ${data.error}`;
+                } else if (data.updated === data.total) {
+                    item.className = 'result-item success';
+                    item.innerHTML = `<div class="obj-name">✅ ${label}</div>Найдено: ${data.updated} / ${data.total}${colInfo}`;
+                } else {
+                    allSuccess = false;
+                    const missedHtml = data.missed && data.missed.length > 0
+                        ? `<div class="missed-names">Не найдены: ${data.missed.join(', ')}</div>` : '';
+                    item.className = 'result-item partial';
+                    item.innerHTML = `<div class="obj-name">⚠️ ${label}</div>Найдено: ${data.updated} / ${data.total}${colInfo}${missedHtml}`;
+                }
+
             } catch (err) {
                 done++;
                 btn.innerText = `Отправляю (${done}/${selected.length})...`;
-                return { label, key, error: err.toString() };
-            }
-        });
-
-        const results = await Promise.all(promises);
-
-        // Рендер результатов
-        resultsBox.style.display = 'block';
-
-        results.forEach(({ label, colToUse, data, error, colNotFound }) => {
-            const item = document.createElement('div');
-            item.className = 'result-item';
-
-            if (colNotFound) {
-                item.classList.add('error');
-                item.innerHTML = `<div class="obj-name">❌ ${label}</div>Число не найдено в шапке`;
-            } else if (error || (data && data.error)) {
-                item.classList.add('error');
+                allSuccess = false;
+                item.className = 'result-item error';
                 item.innerHTML = `<div class="obj-name">❌ ${label}</div>Ошибка связи`;
-            } else if (data.updated === data.total) {
-                const colInfo = colToUse ? ` (столбец ${colToUse})` : '';
-                item.classList.add('success');
-                item.innerHTML = `<div class="obj-name">✅ ${label}</div>Найдено: ${data.updated} / ${data.total}${colInfo}`;
-            } else {
-                const colInfo = colToUse ? ` (столбец ${colToUse})` : '';
-                const missedHtml = data.missed && data.missed.length > 0
-                    ? `<div class="missed-names">Не найдены: ${data.missed.join(', ')}</div>` : '';
-                item.classList.add('partial');
-                item.innerHTML = `<div class="obj-name">⚠️ ${label}</div>Найдено: ${data.updated} / ${data.total}${colInfo}${missedHtml}`;
             }
-
-            resultsBox.appendChild(item);
         });
+
+        await Promise.all(promises);
 
         btn.disabled = false;
         btn.innerText = 'Запустить';
 
-        // Очищаем поле только если все успешно
-        if (results.every(r => !r.error && !r.colNotFound && !r.data?.error && r.data?.updated === r.data?.total)) {
-            namesInput.value = '';
-        }
+        if (allSuccess) namesInput.value = '';
     };
 
     function showStatus(text, type) {
