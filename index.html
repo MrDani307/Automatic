@@ -1,3 +1,4 @@
+```html
 <!DOCTYPE html>
 <html lang="ru">
 <head>
@@ -88,11 +89,7 @@
             background: rgba(255, 255, 255, 0.06);
         }
 
-        select option {
-            color: #000;
-            background: #fff;
-        }
-
+        select option { color: #000; background: #fff; }
         textarea { height: 120px; resize: none; }
 
         .targets-grid {
@@ -165,12 +162,53 @@
             transition: all 0.2s;
         }
 
-        .mode-toggle button.active {
-            background: var(--accent);
-            color: #000;
+        .mode-toggle button.active { background: var(--accent); color: #000; }
+        .mode-toggle button:active { transform: none; opacity: 1; }
+
+        .names-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 6px;
         }
 
-        .mode-toggle button:active { transform: none; opacity: 1; }
+        .names-header label { margin: 0 0 0 6px; }
+
+        .auto-label {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            cursor: pointer;
+            -webkit-user-select: none;
+            user-select: none;
+        }
+
+        .auto-label input[type=checkbox] {
+            width: 16px;
+            height: 16px;
+            padding: 0;
+            accent-color: var(--accent);
+            cursor: pointer;
+        }
+
+        .auto-label span {
+            font-size: 10px;
+            color: #666;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .auto-detected {
+            font-size: 11px;
+            color: var(--accent);
+            background: rgba(187, 134, 252, 0.1);
+            border: 1px solid rgba(187, 134, 252, 0.2);
+            border-radius: 10px;
+            padding: 7px 12px;
+            margin-bottom: 10px;
+            display: none;
+            animation: slideUp 0.3s ease;
+        }
 
         button#go {
             width: 100%;
@@ -201,10 +239,7 @@
             animation: slideUp 0.3s ease;
         }
 
-        .results-box {
-            margin-top: 10px;
-            display: none;
-        }
+        .results-box { margin-top: 10px; display: none; }
 
         .result-item {
             font-size: 11px;
@@ -239,23 +274,9 @@
             border: 1px solid rgba(255, 138, 128, 0.2);
         }
 
-        .result-item .obj-name {
-            font-weight: 700;
-            font-size: 12px;
-            margin-bottom: 3px;
-        }
-
-        .result-item .missed-names {
-            margin-top: 4px;
-            opacity: 0.8;
-            line-height: 1.6;
-        }
-
-        .hint {
-            font-size: 10px;
-            color: #555;
-            margin: 4px 0 0 6px;
-        }
+        .result-item .obj-name { font-weight: 700; font-size: 12px; margin-bottom: 3px; }
+        .result-item .missed-names { margin-top: 4px; opacity: 0.8; line-height: 1.6; }
+        .hint { font-size: 10px; color: #555; margin: 4px 0 0 6px; }
 
         @keyframes slideUp {
             from { transform: translateY(10px); opacity: 0; }
@@ -299,7 +320,7 @@
             <div class="field-group" style="flex: 1;">
                 <label>Число в шапке</label>
                 <input type="number" id="headerNum" value="1" min="1">
-                <div class="hint">Ищет с столбца F (пропускает A–E)</div>
+                <div class="hint">Ищет с столбца F (пропускает A-E)</div>
             </div>
             <div class="field-group" style="flex: 1;">
                 <label>Символ</label>
@@ -309,7 +330,14 @@
     </div>
 
     <div class="field-group">
-        <label>Список (Фамилия Имя)</label>
+        <div class="names-header">
+            <label>Список (Фамилия Имя)</label>
+            <label class="auto-label">
+                <input type="checkbox" id="autoDetect">
+                <span>Авто</span>
+            </label>
+        </div>
+        <div class="auto-detected" id="autoDetected"></div>
         <textarea id="names" placeholder="Иванов Иван&#10;Петров Петр..."></textarea>
     </div>
 
@@ -320,7 +348,7 @@
 </div>
 
 <script>
-    const MACROS = {
+    var MACROS = {
         gymnasium:           { label: "Гимназия",        url: "https://script.google.com/macros/s/AKfycbwk5cGmz-tr-JVF1XI0PIHG8S0Mp99DYWYdt-8Ks1PqG9NHY68Wx0V_aQLb8pTtWS29/exec" },
         rainbow:             { label: "Радуга",           url: "https://script.google.com/macros/s/AKfycbzlG0mNL6ZpH_eqRLsqx2YfSFktMQdzKlDrbRkEj_J2s3-QDEIxYViKvtXm4f9YXydm/exec" },
         creek:               { label: "Ручеёк",           url: "https://script.google.com/macros/s/AKfycbxSeqyOmk2ZsZ7y6rFsqGu69QubseSHK6HwwjiSa0h_ah41_SWEDc5c8IGCHUyT0fBepw/exec" },
@@ -334,27 +362,79 @@
         test:                { label: "Тест",             url: "https://script.google.com/macros/s/AKfycbyb2FrnNQl_HWKUAwFVt7-Yv_X7rERganxUHVC9JhAUHotdOKZuFEcQUymByraPyBe2mw/exec" }
     };
 
-    const grid = document.getElementById('targetsGrid');
-    Object.entries(MACROS).forEach(([key, obj]) => {
-        const chip = document.createElement('div');
+    function detectTarget(text) {
+        var lines = text.split('\n').slice(0, 5);
+        var haystack = lines.join(' ').toLowerCase().replace(/ё/g, 'е');
+        var has36 = haystack.indexOf('36') !== -1;
+        if (has36) {
+            if (/корпус\s*1|1\s*корпус/.test(haystack)) return 'corp1';
+            if (/корпус\s*2|2\s*корпус/.test(haystack)) return 'corp2';
+        }
+        if (haystack.indexOf('якорек') !== -1 || haystack.indexOf('якорь') !== -1) return 'anchor';
+        if (haystack.indexOf('гимназия') !== -1 || haystack.indexOf('гимназии') !== -1) return 'gymnasium';
+        if (haystack.indexOf('радуга') !== -1 || haystack.indexOf('радуги') !== -1) return 'rainbow';
+        if (haystack.indexOf('ручеек') !== -1 || haystack.indexOf('ручей') !== -1) return 'creek';
+        if (haystack.indexOf('чебурашка') !== -1 || haystack.indexOf('чебурашки') !== -1) return 'cheburashka';
+        if (haystack.indexOf('элегант') !== -1) return 'elegant';
+        if (haystack.indexOf('березка') !== -1 || haystack.indexOf('березки') !== -1) return 'berezka';
+        if (haystack.indexOf('турнир') !== -1) return 'elegant_tournaments';
+        return null;
+    }
+
+    var grid = document.getElementById('targetsGrid');
+    Object.keys(MACROS).forEach(function(key) {
+        var obj = MACROS[key];
+        var chip = document.createElement('div');
         chip.className = 'target-chip';
         chip.textContent = obj.label;
         chip.dataset.key = key;
-        chip.onclick = () => chip.classList.toggle('selected');
+        chip.onclick = function() { chip.classList.toggle('selected'); };
         grid.appendChild(chip);
     });
 
     function toggleAll() {
-        const chips = document.querySelectorAll('.target-chip');
-        const allSelected = [...chips].every(c => c.classList.contains('selected'));
-        chips.forEach(c => allSelected ? c.classList.remove('selected') : c.classList.add('selected'));
+        var chips = document.querySelectorAll('.target-chip');
+        var allSelected = true;
+        chips.forEach(function(c) { if (!c.classList.contains('selected')) allSelected = false; });
+        chips.forEach(function(c) { allSelected ? c.classList.remove('selected') : c.classList.add('selected'); });
     }
 
     function getSelected() {
-        return [...document.querySelectorAll('.target-chip.selected')].map(c => c.dataset.key);
+        return Array.from(document.querySelectorAll('.target-chip.selected')).map(function(c) { return c.dataset.key; });
     }
 
-    let currentMode = 'col';
+    function selectOnly(key) {
+        document.querySelectorAll('.target-chip').forEach(function(c) {
+            c.classList.toggle('selected', c.dataset.key === key);
+        });
+    }
+
+    var namesEl = document.getElementById('names');
+    var autoDetectEl = document.getElementById('autoDetect');
+    var autoDetectedEl = document.getElementById('autoDetected');
+
+    namesEl.addEventListener('input', function() {
+        if (!autoDetectEl.checked) return;
+        var found = detectTarget(namesEl.value);
+        if (found) {
+            selectOnly(found);
+            autoDetectedEl.textContent = 'Найдено: ' + MACROS[found].label;
+            autoDetectedEl.style.display = 'block';
+        } else {
+            autoDetectedEl.textContent = 'Объект не распознан';
+            autoDetectedEl.style.display = 'block';
+        }
+    });
+
+    autoDetectEl.addEventListener('change', function() {
+        if (!autoDetectEl.checked) {
+            autoDetectedEl.style.display = 'none';
+        } else if (namesEl.value.trim()) {
+            namesEl.dispatchEvent(new Event('input'));
+        }
+    });
+
+    var currentMode = 'col';
 
     function setMode(mode) {
         currentMode = mode;
@@ -364,27 +444,27 @@
         document.getElementById('modeNum').classList.toggle('active', mode === 'num');
     }
 
-    const btn = document.getElementById('go');
-    const statusEl = document.getElementById('status');
-    const resultsBox = document.getElementById('resultsBox');
+    var btn = document.getElementById('go');
+    var statusEl = document.getElementById('status');
+    var resultsBox = document.getElementById('resultsBox');
 
-    btn.onclick = async () => {
-        const selected = getSelected();
+    btn.onclick = async function() {
+        var selected = getSelected();
         if (selected.length === 0) { showStatus('Выбери хотя бы один объект!', 'error'); return; }
 
-        const namesInput = document.getElementById('names');
-        const names = namesInput.value;
+        var namesInput = document.getElementById('names');
+        var names = namesInput.value;
         if (!names.trim()) { showStatus('Вставь имена!', 'error'); return; }
 
-        const val = currentMode === 'col'
+        var val = currentMode === 'col'
             ? document.getElementById('val').value
             : document.getElementById('val2').value;
 
-        const colFixed = currentMode === 'col'
+        var colFixed = currentMode === 'col'
             ? document.getElementById('col').value.trim()
             : null;
 
-        const headerNum = currentMode === 'num'
+        var headerNum = currentMode === 'num'
             ? parseInt(document.getElementById('headerNum').value)
             : null;
 
@@ -394,90 +474,85 @@
         }
 
         btn.disabled = true;
-        btn.innerText = `Отправляю (0/${selected.length})...`;
+        btn.innerText = 'Отправляю (0/' + selected.length + ')...';
         statusEl.style.display = 'none';
         resultsBox.style.display = 'block';
         resultsBox.innerHTML = '';
 
-        let done = 0;
-        let allSuccess = true;
+        var done = 0;
+        var allSuccess = true;
 
-        const promises = selected.map(async (key) => {
-            const macroUrl = MACROS[key].url;
-            const label = MACROS[key].label;
+        var promises = selected.map(async function(key) {
+            var macroUrl = MACROS[key].url;
+            var label = MACROS[key].label;
 
-            // Сразу показываем плейсхолдер
-            const item = document.createElement('div');
+            var item = document.createElement('div');
             item.className = 'result-item loading';
-            item.innerHTML = `<div class="obj-name">⏳ ${label}</div>Отправляю...`;
+            item.innerHTML = '<div class="obj-name">... ' + label + '</div>Отправляю...';
             resultsBox.appendChild(item);
 
             try {
-                let colToUse = colFixed;
+                var colToUse = colFixed;
 
                 if (currentMode === 'num') {
-                    const findUrl = `${macroUrl}?findCol=${encodeURIComponent(headerNum)}`;
-                    const findResp = await fetch(findUrl);
-                    const findData = await findResp.json();
-
+                    var findResp = await fetch(macroUrl + '?findCol=' + encodeURIComponent(headerNum));
+                    var findData = await findResp.json();
                     if (findData.colLetter) {
                         colToUse = findData.colLetter;
                     } else {
                         done++;
-                        btn.innerText = `Отправляю (${done}/${selected.length})...`;
+                        btn.innerText = 'Отправляю (' + done + '/' + selected.length + ')...';
                         allSuccess = false;
                         item.className = 'result-item error';
-                        item.innerHTML = `<div class="obj-name">❌ ${label}</div>Число не найдено в шапке`;
+                        item.innerHTML = '<div class="obj-name">X ' + label + '</div>Число не найдено в шапке';
                         return;
                     }
                 }
 
-                const finalUrl = `${macroUrl}?searchName=${encodeURIComponent(names)}&col=${encodeURIComponent(colToUse)}&val=${encodeURIComponent(val)}`;
-                const resp = await fetch(finalUrl);
-                const data = await resp.json();
+                var finalUrl = macroUrl + '?searchName=' + encodeURIComponent(names) + '&col=' + encodeURIComponent(colToUse) + '&val=' + encodeURIComponent(val);
+                var resp = await fetch(finalUrl);
+                var data = await resp.json();
 
                 done++;
-                btn.innerText = `Отправляю (${done}/${selected.length})...`;
+                btn.innerText = 'Отправляю (' + done + '/' + selected.length + ')...';
 
-                const colInfo = colToUse ? ` (столбец ${colToUse})` : '';
+                var colInfo = colToUse ? ' (столбец ' + colToUse + ')' : '';
 
                 if (data.error) {
                     allSuccess = false;
                     item.className = 'result-item error';
-                    item.innerHTML = `<div class="obj-name">❌ ${label}</div>Ошибка: ${data.error}`;
+                    item.innerHTML = '<div class="obj-name">X ' + label + '</div>Ошибка: ' + data.error;
                 } else if (data.updated === data.total) {
                     item.className = 'result-item success';
-                    item.innerHTML = `<div class="obj-name">✅ ${label}</div>Найдено: ${data.updated} / ${data.total}${colInfo}`;
+                    item.innerHTML = '<div class="obj-name">OK ' + label + '</div>Найдено: ' + data.updated + ' / ' + data.total + colInfo;
                 } else {
                     allSuccess = false;
-                    const missedHtml = data.missed && data.missed.length > 0
-                        ? `<div class="missed-names">Не найдены: ${data.missed.join(', ')}</div>` : '';
+                    var missedHtml = (data.missed && data.missed.length > 0)
+                        ? '<div class="missed-names">Не найдены: ' + data.missed.join(', ') + '</div>' : '';
                     item.className = 'result-item partial';
-                    item.innerHTML = `<div class="obj-name">⚠️ ${label}</div>Найдено: ${data.updated} / ${data.total}${colInfo}${missedHtml}`;
+                    item.innerHTML = '<div class="obj-name">! ' + label + '</div>Найдено: ' + data.updated + ' / ' + data.total + colInfo + missedHtml;
                 }
 
             } catch (err) {
                 done++;
-                btn.innerText = `Отправляю (${done}/${selected.length})...`;
+                btn.innerText = 'Отправляю (' + done + '/' + selected.length + ')...';
                 allSuccess = false;
                 item.className = 'result-item error';
-                item.innerHTML = `<div class="obj-name">❌ ${label}</div>Ошибка связи`;
+                item.innerHTML = '<div class="obj-name">X ' + label + '</div>Ошибка связи';
             }
         });
 
         await Promise.all(promises);
 
-        // Сортируем по количеству найденных (больше = выше)
-        const items = [...resultsBox.querySelectorAll('.result-item')];
-        items.sort((a, b) => {
-            const getCount = (el) => {
-                const text = el.querySelector('.obj-name')?.nextSibling?.textContent || el.innerHTML;
-                const match = text.match(/(\d+)\s*\/\s*\d+/);
+        var items = Array.from(resultsBox.querySelectorAll('.result-item'));
+        items.sort(function(a, b) {
+            var getCount = function(el) {
+                var match = el.innerHTML.match(/(\d+)\s*\/\s*\d+/);
                 return match ? parseInt(match[1]) : -1;
             };
             return getCount(b) - getCount(a);
         });
-        items.forEach(item => resultsBox.appendChild(item));
+        items.forEach(function(item) { resultsBox.appendChild(item); });
 
         btn.disabled = false;
         btn.innerText = 'Запустить';
@@ -494,3 +569,4 @@
 
 </body>
 </html>
+```
