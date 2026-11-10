@@ -17,13 +17,6 @@
             -webkit-tap-highlight-color: transparent;
             outline: none !important;
             box-sizing: border-box;
-            -webkit-user-select: none;
-            user-select: none;
-        }
-
-        input, textarea, select {
-            -webkit-user-select: text;
-            user-select: text;
         }
 
         body {
@@ -36,6 +29,24 @@
             align-items: center;
             min-height: 100vh;
             background: radial-gradient(circle at top right, #1a1a1a, #050505);
+            -webkit-user-select: text;
+            user-select: text;
+        }
+
+        input, textarea, select {
+            -webkit-user-select: text;
+            user-select: text;
+        }
+
+        /* Запрещаем выделение только для интерактивных элементов */
+        .target-chip,
+        .select-all-btn,
+        .mode-toggle button,
+        button#go,
+        .auto-label,
+        .auto-label span {
+            -webkit-user-select: none;
+            user-select: none;
         }
 
         .card {
