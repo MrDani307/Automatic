@@ -11,6 +11,7 @@
             --accent: #bb86fc;
             --text: #ffffff;
             --border: rgba(255, 255, 255, 0.08);
+            --warn: #ffc107;
         }
 
         * {
@@ -38,13 +39,13 @@
             user-select: text;
         }
 
-        /* Запрещаем выделение только для интерактивных элементов */
         .target-chip,
         .select-all-btn,
         .mode-toggle button,
         button#go,
         .auto-label,
-        .auto-label span {
+        .auto-label span,
+        .clear-btn {
             -webkit-user-select: none;
             user-select: none;
         }
@@ -99,6 +100,12 @@
             background: rgba(255, 255, 255, 0.06);
         }
 
+        input:disabled {
+            opacity: 0.35;
+            cursor: not-allowed;
+            filter: grayscale(1);
+        }
+
         select option { color: #000; background: #fff; }
         textarea { height: 120px; resize: none; }
 
@@ -120,8 +127,6 @@
             text-align: center;
             cursor: pointer;
             transition: all 0.2s;
-            -webkit-user-select: none;
-            user-select: none;
         }
 
         .target-chip.selected {
@@ -175,6 +180,52 @@
         .mode-toggle button.active { background: var(--accent); color: #000; }
         .mode-toggle button:active { transform: none; opacity: 1; }
 
+        /* Кнопка-предупреждение "Очищать ячейки" */
+        .clear-btn {
+            width: 100%;
+            padding: 12px;
+            background: transparent;
+            border: 1px solid rgba(255, 193, 7, 0.35);
+            border-radius: 14px;
+            color: var(--warn);
+            font-size: 11px;
+            font-weight: 600;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            cursor: pointer;
+            margin-bottom: 16px;
+            transition: all 0.2s;
+            position: relative;
+        }
+
+        .clear-btn::before {
+            content: "⚠";
+            margin-right: 6px;
+            font-size: 13px;
+            vertical-align: -1px;
+        }
+
+        .clear-btn:active { opacity: 0.7; }
+
+        .clear-btn.active {
+            background: rgba(255, 193, 7, 0.15);
+            border-color: var(--warn);
+            box-shadow: 0 0 0 3px rgba(255, 193, 7, 0.08);
+        }
+
+        .clear-warning {
+            font-size: 10px;
+            color: var(--warn);
+            background: rgba(255, 193, 7, 0.08);
+            border: 1px dashed rgba(255, 193, 7, 0.3);
+            border-radius: 10px;
+            padding: 8px 12px;
+            margin: -8px 0 16px;
+            line-height: 1.5;
+            display: none;
+            animation: slideUp 0.25s ease;
+        }
+
         .names-header {
             display: flex;
             align-items: center;
@@ -189,8 +240,6 @@
             align-items: center;
             gap: 6px;
             cursor: pointer;
-            -webkit-user-select: none;
-            user-select: none;
         }
 
         .auto-label input[type=checkbox] {
@@ -233,7 +282,11 @@
             text-transform: uppercase;
             letter-spacing: 1px;
             cursor: pointer;
-            transition: transform 0.1s, opacity 0.2s;
+            transition: transform 0.1s, opacity 0.2s, background 0.2s;
+        }
+
+        button#go.clear-mode {
+            background: var(--warn);
         }
 
         button#go:active { transform: scale(0.96); opacity: 0.8; }
@@ -337,6 +390,11 @@
                 <input type="text" id="val2" value="1">
             </div>
         </div>
+    </div>
+
+    <button id="clearModeBtn" class="clear-btn" onclick="toggleClearMode()">Очищать ячейки</button>
+    <div id="clearWarning" class="clear-warning">
+        Режим очистки: символ не будет записан. Весь текст из найденных ячеек будет <b>удалён</b>. Действие необратимо.
     </div>
 
     <div class="field-group">
@@ -454,6 +512,36 @@
         document.getElementById('modeNum').classList.toggle('active', mode === 'num');
     }
 
+    /* ===== Режим очистки ===== */
+    var clearMode = false;
+    var clearModeBtn = document.getElementById('clearModeBtn');
+    var clearWarning = document.getElementById('clearWarning');
+    var goBtn = document.getElementById('go');
+
+    function toggleClearMode() {
+        if (!clearMode) {
+            var ok = confirm(
+                'ВКЛЮЧИТЬ РЕЖИМ ОЧИСТКИ?\n\n' +
+                'Символ НЕ будет записан в ячейки.\n' +
+                'Вместо этого весь текст из найденных ячеек будет УДАЛЁН.\n\n' +
+                'Действие необратимо.'
+            );
+            if (!ok) return;
+        }
+        clearMode = !clearMode;
+        clearModeBtn.classList.toggle('active', clearMode);
+        clearWarning.style.display = clearMode ? 'block' : 'none';
+
+        var valInputs = [document.getElementById('val'), document.getElementById('val2')];
+        valInputs.forEach(function(i) {
+            i.disabled = clearMode;
+        });
+
+        goBtn.classList.toggle('clear-mode', clearMode);
+        goBtn.innerText = clearMode ? 'Запустить очистку' : 'Запустить';
+    }
+
+    /* ===== Запуск ===== */
     var btn = document.getElementById('go');
     var statusEl = document.getElementById('status');
     var resultsBox = document.getElementById('resultsBox');
@@ -491,6 +579,7 @@
 
         var done = 0;
         var allSuccess = true;
+        var actionParam = clearMode ? '&clear=1' : '';
 
         var promises = selected.map(async function(key) {
             var macroUrl = MACROS[key].url;
@@ -519,7 +608,12 @@
                     }
                 }
 
-                var finalUrl = macroUrl + '?searchName=' + encodeURIComponent(names) + '&col=' + encodeURIComponent(colToUse) + '&val=' + encodeURIComponent(val);
+                var finalUrl = macroUrl
+                    + '?searchName=' + encodeURIComponent(names)
+                    + '&col=' + encodeURIComponent(colToUse)
+                    + '&val=' + encodeURIComponent(clearMode ? '' : val)
+                    + actionParam;
+
                 var resp = await fetch(finalUrl);
                 var data = await resp.json();
 
@@ -527,6 +621,7 @@
                 btn.innerText = 'Отправляю (' + done + '/' + selected.length + ')...';
 
                 var colInfo = colToUse ? ' (столбец ' + colToUse + ')' : '';
+                var actionWord = clearMode ? 'Очищено' : 'Найдено';
 
                 if (data.error) {
                     allSuccess = false;
@@ -534,13 +629,13 @@
                     item.innerHTML = '<div class="obj-name">X ' + label + '</div>Ошибка: ' + data.error;
                 } else if (data.updated === data.total) {
                     item.className = 'result-item success';
-                    item.innerHTML = '<div class="obj-name">OK ' + label + '</div>Найдено: ' + data.updated + ' / ' + data.total + colInfo;
+                    item.innerHTML = '<div class="obj-name">OK ' + label + '</div>' + actionWord + ': ' + data.updated + ' / ' + data.total + colInfo;
                 } else {
                     allSuccess = false;
                     var missedHtml = (data.missed && data.missed.length > 0)
                         ? '<div class="missed-names">Не найдены: ' + data.missed.join(', ') + '</div>' : '';
                     item.className = 'result-item partial';
-                    item.innerHTML = '<div class="obj-name">! ' + label + '</div>Найдено: ' + data.updated + ' / ' + data.total + colInfo + missedHtml;
+                    item.innerHTML = '<div class="obj-name">! ' + label + '</div>' + actionWord + ': ' + data.updated + ' / ' + data.total + colInfo + missedHtml;
                 }
 
             } catch (err) {
@@ -565,7 +660,7 @@
         items.forEach(function(item) { resultsBox.appendChild(item); });
 
         btn.disabled = false;
-        btn.innerText = 'Запустить';
+        btn.innerText = clearMode ? 'Запустить очистку' : 'Запустить';
 
         if (allSuccess) namesInput.value = '';
     };
